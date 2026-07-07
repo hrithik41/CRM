@@ -1,15 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContainer from './ui/AuthContainer';
 import { Users, TrendingUp, Download, ShieldCheck, Lock } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { api } from '../utils/api';
 
 const Login = () => {
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Simulate login for now, then navigate to dashboard
-    navigate('/dashboard');
+    
+    // Custom Validation
+    let hasError = false;
+    if (!email.trim()) {
+      setEmailError(true);
+      hasError = true;
+    }
+    if (!password.trim()) {
+      setPasswordError(true);
+      hasError = true;
+    }
+    if (hasError) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+        const data = await api.post("/api/auth/login", { email, password });
+        if(data.success){
+            toast.success("Login successful! Welcome back.");
+            console.log("User logged in:", data);
+            navigate('/dashboard');
+        }
+        else{
+            toast.error(data.message || "Failed to login. Please check your credentials.");
+        }
+    }
+    catch(error){
+        toast.error("Cannot connect to the server. Please try again later.");
+        console.error(error);
+    }
+    setLoading(false);
   };
 
   const features = [
@@ -67,9 +108,15 @@ const Login = () => {
             </label>
             <input 
               type="email" 
-              id="email" 
-              placeholder="example@gmail.com" 
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
+              id="email"
+              placeholder="example@gmail.com"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setEmailError(false); }}
+              className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+                emailError 
+                  ? 'border-red-500 bg-red-50 focus:ring-red-500 text-red-900 placeholder-red-300' 
+                  : 'border-gray-300 focus:ring-blue-500 bg-gray-50 focus:bg-white'
+              }`}
             />
           </div>
           
@@ -85,8 +132,14 @@ const Login = () => {
             <input 
               type="password" 
               id="password" 
-              placeholder="••••••••" 
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
+              className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+                passwordError 
+                  ? 'border-red-500 bg-red-50 focus:ring-red-500 text-red-900 placeholder-red-300' 
+                  : 'border-gray-300 focus:ring-blue-500 bg-gray-50 focus:bg-white'
+              }`}
             />
           </div>
           
