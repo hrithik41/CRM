@@ -1,7 +1,35 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Clock, Bell, Home, ChevronDown, List, Layers, LayoutGrid } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 const Navbar = () => {
+
+  const navigate = useNavigate()
+  const [user, setUser] = useState(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user")
+    if(savedUser){
+      setUser(JSON.parse(savedUser))
+    }
+  }, [])
+
+  const getInitials = (name) => {
+    if (!name) return "US"; // Default fallback
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user")
+    setUser(null)
+    navigate("/")
+  }
+  
   return (
     <div className="flex flex-col w-full text-white font-sans sticky top-0 z-50 shadow-md">
       {/* Top Row */}
@@ -58,7 +86,7 @@ const Navbar = () => {
           </button>
           
           <button className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white/10 hover:ring-white/30 transition-all cursor-pointer shadow-inner">
-            SR
+            {user ? getInitials(user.name) : "US"}
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   DollarSign, 
   Users, 
@@ -21,44 +21,60 @@ import {
 
 const Dashboard = () => {
   // Stat Card Mock Data
-  const stats = [
-    {
-      title: 'Total Revenue',
-      value: '$48,259.00',
-      change: '+12.5%',
-      isPositive: true,
-      icon: DollarSign,
-      iconColor: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-      sparkline: [20, 35, 30, 45, 50, 42, 60],
-    },
-    {
-      title: 'Active Deals',
-      value: '42 Active',
-      change: '+8.2%',
-      isPositive: true,
-      icon: Briefcase,
-      iconColor: 'text-indigo-600 bg-indigo-50 border-indigo-100',
-      sparkline: [15, 22, 28, 25, 32, 38, 42],
-    },
-    {
-      title: 'New Leads',
-      value: '184 Leads',
-      change: '-3.1%',
-      isPositive: false,
-      icon: Users,
-      iconColor: 'text-blue-600 bg-blue-50 border-blue-100',
-      sparkline: [40, 38, 45, 42, 35, 39, 36],
-    },
-    {
-      title: 'Win Rate',
-      value: '24.6%',
-      change: '+4.8%',
-      isPositive: true,
-      icon: Target,
-      iconColor: 'text-amber-600 bg-amber-50 border-amber-100',
-      sparkline: [18, 20, 21, 23, 22, 24, 24.6],
-    },
-  ]
+  // const stats = [
+  //   {
+  //     title: 'Total Revenue',
+  //     value: '$48,259.00',
+  //     change: '+12.5%',
+  //     isPositive: true,
+  //     icon: DollarSign,
+  //     iconColor: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+  //     sparkline: [20, 35, 30, 45, 50, 42, 60],
+  //   },
+  //   {
+  //     title: 'Active Deals',
+  //     value: '42 Active',
+  //     change: '+8.2%',
+  //     isPositive: true,
+  //     icon: Briefcase,
+  //     iconColor: 'text-indigo-600 bg-indigo-50 border-indigo-100',
+  //     sparkline: [15, 22, 28, 25, 32, 38, 42],
+  //   },
+  //   {
+  //     title: 'New Leads',
+  //     value: '184 Leads',
+  //     change: '-3.1%',
+  //     isPositive: false,
+  //     icon: Users,
+  //     iconColor: 'text-blue-600 bg-blue-50 border-blue-100',
+  //     sparkline: [40, 38, 45, 42, 35, 39, 36],
+  //   },
+  //   {
+  //     title: 'Win Rate',
+  //     value: '24.6%',
+  //     change: '+4.8%',
+  //     isPositive: true,
+  //     icon: Target,
+  //     iconColor: 'text-amber-600 bg-amber-50 border-amber-100',
+  //     sparkline: [18, 20, 21, 23, 22, 24, 24.6],
+  //   },
+  // ]
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const formattedDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric'
+  });
 
   // Recent Deals Mock Data
   const recentDeals = [
@@ -80,8 +96,9 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold tracking-wide">Sponsorship Dashboard</h1>
           </div>
           <div className="text-sm text-white/90 ml-8 font-medium">
-            Monday, July 6, 2026 • Simran Rai • Sponsorship
-          </div>
+   {formattedDate} • {user ? user.name : "Loading..."} • {user ? user.department : "Loading..."}
+</div>
+
         </div>
 
         {/* Bottom Div: Filter Bar */}
@@ -153,7 +170,7 @@ const Dashboard = () => {
         {/* Row 1: 2 Divs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           {/* Calls Today */}
-          <div className="bg-[#FFF8F0] rounded shadow-sm border border-slate-200 border-l-4 border-l-[#b44b00] px-4 py-2 flex flex-col justify-center">
+          {/* <div className="bg-[#FFF8F0] rounded shadow-sm border border-slate-200 border-l-4 border-l-[#b44b00] px-4 py-2 flex flex-col justify-center">
             <div className="flex items-center gap-4">
               <div className="bg-[#8c4600] w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0">
                 <Phone size={24} className="fill-white" />
@@ -164,23 +181,23 @@ const Dashboard = () => {
                 <span className="text-xs text-[#b44b00]/80">06 Jul 2026</span>
               </div>
             </div>
-          </div>
+          </div> */}
           
           {/* Won This Month */}
-          <div className="bg-white rounded shadow-sm border border-slate-200 border-b-4 border-b-orange-500 px-5 py-3 flex flex-col relative overflow-hidden">
+          {/* <div className="bg-white rounded shadow-sm border border-slate-200 border-b-4 border-b-orange-500 px-5 py-3 flex flex-col relative overflow-hidden">
             <div className="absolute top-3 right-4 bg-orange-100 text-orange-600 font-bold text-xs px-2.5 py-0.5 rounded-full shadow-sm">
               Jul
             </div>
             <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase mb-1.5">Won This Month</span>
             <span className="text-3xl font-bold text-orange-500 leading-none mb-1">0</span>
             <span className="text-xs text-slate-400">Closed Won - Jul 2026</span>
-          </div>
+          </div> */}
         </div>
 
         {/* Row 2: 4 Divs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Calls (Activities) */}
-          <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between">
+          {/* <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-1.5">
                 <Phone size={12} />
@@ -189,10 +206,10 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-[#b44b00] mb-1">1,590</div>
             </div>
             <span className="text-[10px] text-slate-500">completed_datetime - 2025-04-01 - 2026-06-30</span>
-          </div>
+          </div> */}
           
           {/* Pitches */}
-          <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between">
+          {/* <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-1.5">
                 <Megaphone size={12} />
@@ -201,10 +218,10 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-purple-600 mb-1">21</div>
             </div>
             <span className="text-xs text-slate-600">Active pitches</span>
-          </div>
+          </div> */}
 
           {/* Revenue Closed */}
-          <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between">
+          {/* <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-1.5">
                 <IndianRupee size={12} />
@@ -213,10 +230,10 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-[#b44b00] mb-1">₹8.40 L</div>
             </div>
             <span className="text-[10px] text-slate-600">4 deals - New: ₹4.40 L - Old: ₹4.00 L</span>
-          </div>
+          </div> */}
 
           {/* % Conversion */}
-          <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between items-start">
+          {/* <div className="bg-white rounded shadow-sm border border-slate-200 px-4 py-2.5 flex flex-col justify-between items-start">
             <div>
               <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 tracking-wider uppercase mb-2">
                 <Percent size={12} />
@@ -227,14 +244,14 @@ const Dashboard = () => {
               </div>
             </div>
             <span className="text-[11px] text-slate-600">Pitches → Won</span>
-          </div>
+          </div> */}
         </div>
 
         {/* Tables Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           
           {/* Project-wise Summary */}
-          <div className="bg-white rounded shadow-sm border border-slate-200 flex flex-col">
+          {/* <div className="bg-white rounded shadow-sm border border-slate-200 flex flex-col">
             <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <GitMerge size={14} className="text-orange-500" />
@@ -306,10 +323,10 @@ const Dashboard = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
 
           {/* Monthly Performance Trend */}
-          <div className="bg-white rounded shadow-sm border border-slate-200 flex flex-col">
+          {/* <div className="bg-white rounded shadow-sm border border-slate-200 flex flex-col">
             <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <TrendingUp size={14} className="text-orange-500" />
@@ -409,11 +426,11 @@ const Dashboard = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Open Tasks Row */}
-        <div className="bg-white rounded shadow-sm border border-slate-200 flex flex-col">
+        {/* <div className="bg-white rounded shadow-sm border border-slate-200 flex flex-col">
           <div className="flex items-center p-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <ListChecks size={18} className="text-orange-500" />
@@ -502,7 +519,7 @@ const Dashboard = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

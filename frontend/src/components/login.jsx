@@ -38,6 +38,7 @@ const Login = () => {
     try {
         const data = await api.post("/api/auth/login", { email, password });
         if(data.success){
+            localStorage.setItem("user", JSON.stringify(data.user));
             toast.success("Login successful! Welcome back.");
             console.log("User logged in:", data);
             navigate('/dashboard');
