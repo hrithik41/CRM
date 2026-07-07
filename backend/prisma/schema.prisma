@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model user {
+  user_id         String     @id @default(uuid())
+  user_email      String     @unique
+  user_name       String
+  user_role       Role       @default(USER)
+  user_department Department @default(SALES)
+  user_password   String
+  user_status     Boolean    @default(true)
+  user_created_at DateTime   @default(now())
+  user_updated_at DateTime   @updatedAt
+  user_deleted_at DateTime?
+
+  user_accounts      account[]     @relation("account")
+  user_contacts      contact[]     @relation("contact_user")
+  user_opportunities opportunity[] @relation("user")
+  user_campaigns     campaign[]    @relation("campaign_user")
+  user_tasks         task[]        @relation("task_user")
+
+  @@index([user_status])
+  @@index([user_deleted_at])
+  @@index([user_role, user_department])
+  @@index([user_name])
+  @@map("users")
+}
+
+model account {
+  account_id String @id @default(uuid())
+
+  account_owner_fk String
+  owner            user   @relation("account", fields: [account_owner_fk], references: [user_id])
+
+  account_name           String
+  account_type           account_type @default(CUSTOMER)
+  account_phone          String?
+  account_website        String?
+  account_email          String?
+  account_city           String?
+  account_country        String?
+  account_industry       String?
+  account_employees_size Int?
+  account_description    String?      @db.Text
+  account_account_status Status       @default(ACTIVE)
+  account_annual_revenue Decimal?     @db.Decimal(18, 2)
+  account_parent_fk      String?
+  account_parent         account?     @relation("account_parent", fields: [account_parent_fk], references: [account_id])
+  account_created_at     DateTime     @default(now())
+  account_updated_at     DateTime     @updatedAt
+  account_deleted_at     DateTime?
+
+  account_contacts         contact[]  @relation("account_contacts")
+  account_billing_address  billing[]
+  account_shipping_address shipping[]
+  account_children         account[]  @relation("account_parent")
+
+  @@index([account_owner_fk])
+  @@index([account_account_status])
+  @@index([account_deleted_at])
+  @@index([account_country, account_city])
+  @@index([account_industry])
+  @@index([account_parent_fk])
+  @@index([account_name])
+  @@map("accounts")
+}
+
+model contact {
+  contact_id         String   @id @default(uuid())
+  contact_user_fk    String?
+  user               user?    @relation("contact_user", fields: [contact_user_fk], references: [user_id])
+  contact_account_fk String?
+  account            account? @relation("account_contacts", fields: [contact_account_fk], references: [account_id])
+
+  @@index([contact_user_fk])
+  @@index([contact_account_fk])
+  @@map("contacts")
+}
+
+model opportunity {
+  opportunity_id         String   @id @default(uuid())
+  opportunity_name       String
+  opportunity_stage      String
+  opportunity_value      Float
+  opportunity_close_date DateTime
+  opportunity_created_at DateTime @default(now())
+  opportunity_updated_at DateTime @updatedAt
+  owner_id               String?
+  owner                  user?    @relation("user", fields: [owner_id], references: [user_id])
+
+  @@map("opportunities")
+}
+
+model task {
+  task_id      String  @id @default(uuid())
+  task_user_fk String?
+  user         user?   @relation("task_user", fields: [task_user_fk], references: [user_id])
+
+  @@index([task_user_fk])
+  @@map("tasks")
+}
+
+model campaign {
+  campaign_id      String  @id @default(uuid())
+  campaign_user_fk String?
+  user             user?   @relation("campaign_user", fields: [campaign_user_fk], references: [user_id])
+
+  @@index([campaign_user_fk])
+  @@map("campaigns")
+}
+
+model billing {
+  billing_id         String   @id @default(uuid())
+  billing_account_fk String?
+  account            account? @relation(fields: [billing_account_fk], references: [account_id])
+  billing_street     String?
+  billing_state      String?
+  billing_zip        String?
+  billing_country    String?
+  billing_city       String?
+  billing_phone      String?
+  billing_email      String?
+
+  @@index([billing_account_fk])
+  @@map("billing")
+}
+
+model shipping {
+  shipping_id         String   @id @default(uuid())
+  shipping_account_fk String?
+  account             account? @relation(fields: [shipping_account_fk], references: [account_id])
+  shipping_street     String?
+  shipping_state      String?
+  shipping_zip        String?
+  shipping_country    String?
+  shipping_city       String?
+  shipping_phone      String?
+  shipping_email      String?
+
+  @@index([shipping_account_fk])
+  @@map("shipping")
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+  SALES
+  DATA
+  PRODUCTION
+  SPONSORSHIP
+  OPERATION
+}
+
+enum Department {
+  SALES
+  MARKETING
+  FINANCE
+  IT
+  HUMAN_RESOURCES
+}
+
+enum account_type {
+  CUSTOMER
+  PARTNER
+  PROSPECT
+  COMPETITER
+  RESELLER
+  DISTRIBUTOR
+}
+
+// enum employee_size {
+//   1
+//   10
+//   50
+//   200
+//   500
+//   1000
+//   5000
+//   10000
+//   10000+
+// }

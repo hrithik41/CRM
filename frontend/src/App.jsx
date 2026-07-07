@@ -2,20 +2,21 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import DashboardLayout from './layouts/DashboardLayout'
 import Dashboard from './pages/Dashboard'
+import NewDashboard from './pages/NewDashboard'
+import Login from './components/login'
 
 const App = () => {
   return (
     <Routes>
-      {/* Forward root path to dashboard */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Login />} />
 
-      {/* Main dashboard shell layout */}
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/newdashboard" element={<NewDashboard />} />
       </Route>
 
-      {/* Redirect fallback */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* Redirect fallback for unknown routes */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
