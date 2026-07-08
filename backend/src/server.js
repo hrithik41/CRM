@@ -1,5 +1,6 @@
 import express from "express";
 import authRoutes from "./routes/auth.routes.js";
+import accountRoutes from "./routes/account.routes.js";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/accounts", accountRoutes);
 
 app.get("/", (req, res) => {
   res.send("CRM API Running");

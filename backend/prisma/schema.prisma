@@ -33,6 +33,7 @@ model user {
 
 model account {
   account_id String @id @default(uuid())
+  account_code           String       @unique
 
   account_owner_fk String
   owner            user   @relation("account", fields: [account_owner_fk], references: [user_id])

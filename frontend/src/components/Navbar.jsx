@@ -93,8 +93,8 @@ const Navbar = () => {
         <Button
           variant="ghost"
           size="nav"
-          active={location.pathname.startsWith("/dashboard")}
-          className="gap-2"
+          active={location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/newdashboard")}
+          className="gap-2 w-[140px]"
           onClick={() => navigate("/dashboard")}
         >
           <Home size={16} />
@@ -131,7 +131,7 @@ const Navbar = () => {
           variant="ghost"
           size="nav"
           active={location.pathname.startsWith("/tasks")}
-          className="gap-2 group"
+          className="gap-2 group w-[140px]"
           onClick={() => navigate("/tasks")}
         >
           <List
@@ -157,7 +157,7 @@ const NavDropdownItem = ({ label, path }) => {
       variant="ghost"
       size="nav"
       active={location.pathname.startsWith(path)}
-      className="gap-1.5"
+      className="gap-1.5 w-[140px]"
       onClick={() => navigate(path)}
     >
       {label}
