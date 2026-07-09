@@ -11,10 +11,34 @@ import Campaigns from './pages/Campaigns'
 import Tasks from './pages/Tasks'
 import Login from './components/login'
 
+// V2 Imports
+import LoginV2Layout from './components/v2/login/loginLayout'
+import LoginV2 from './components/v2/login/login'
+import LoginV2Form from './components/v2/login/loginForm'
+import DashboardV2Layout from './components/v2/dashboardLayout'
+import DashboardV2 from './components/v2/dashboard'
+
 const App = () => {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
+
+      <Route path="/v2/login" element={<LoginV2Layout />}>
+        <Route index element={<LoginV2 />} />
+        <Route path="admin" element={<LoginV2Form role="admin" title="Admin Login" subtitle="Access the dashboard as an administrator" />} />
+        <Route path="employee" element={<LoginV2Form role="employee" title="Employee Login" subtitle="Access your employee portal and tasks" />} />
+      </Route>
+
+      <Route path="/v2" element={<DashboardV2Layout />}>
+        <Route path="dashboard" element={<DashboardV2 />} />
+        {/* Placeholder mappings for other sidebar links so they render inside the V2 layout */}
+        <Route path="contacts" element={<Contacts />} />
+        <Route path="accounts" element={<Accounts />} />
+        <Route path="opportunities" element={<Opportunities />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="campaigns" element={<Campaigns />} />
+        <Route path="tasks" element={<Tasks />} />
+      </Route>
 
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

@@ -1,7 +1,13 @@
 import { prisma } from "../src/lib/prisma.js";
 
 async function main() {
-  const ownerId = "f338e335-3b39-4090-8e72-f5b7fecc264c";
+  const user = await prisma.user.findFirst();
+  
+  if (!user) {
+    throw new Error("No users found! Please run 'npm run seed' first to create users.");
+  }
+
+  const ownerId = user.user_id;
 
   const accounts = [
     {

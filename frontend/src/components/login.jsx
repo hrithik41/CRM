@@ -65,7 +65,7 @@ const Login = () => {
   const leftContent = (
     <div className="animate-fade-in">
       <h4 className="text-sm font-thin tracking-widest text-blue-200 mb-4 uppercase">UBS Forums CRM</h4>
-      <h1 className="text-1xl lg:text-4xl font-bold mb-4 leading-[1]">
+      <h1 className="text-xl lg:text-4xl font-bold mb-4 leading-tight">
         Your complete relationship management platform.
       </h1>
       <p className="text-lg text-blue-100 mb-12 leading-relaxed max-w-md">
