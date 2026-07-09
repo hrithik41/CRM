@@ -11,10 +11,21 @@ import Campaigns from './pages/Campaigns'
 import Tasks from './pages/Tasks'
 import Login from './components/login'
 
+// V2 Imports
+import LoginV2Layout from './components/v2/loginLayout'
+import LoginV2 from './components/v2/login'
+import LoginV2Form from './components/v2/loginForm'
+
 const App = () => {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
+
+      <Route path="/v2/login" element={<LoginV2Layout />}>
+        <Route index element={<LoginV2 />} />
+        <Route path="admin" element={<LoginV2Form role="admin" title="Admin Login" subtitle="Access the dashboard as an administrator" />} />
+        <Route path="employee" element={<LoginV2Form role="employee" title="Employee Login" subtitle="Access your employee portal and tasks" />} />
+      </Route>
 
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
