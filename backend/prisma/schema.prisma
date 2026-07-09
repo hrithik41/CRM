@@ -32,20 +32,22 @@ model user {
 }
 
 model account {
-  account_id String @id @default(uuid())
-  account_code           String       @unique
+  account_id   String @id @default(uuid())
+  account_code String @unique
 
   account_owner_fk String
   owner            user   @relation("account", fields: [account_owner_fk], references: [user_id])
 
+  account_industry_fk String?
+  industry            industry? @relation(fields: [account_industry_fk], references: [industry_id])
+
   account_name           String
-  account_type           account_type @default(CUSTOMER)
+  account_type           account_type?
   account_phone          String?
   account_website        String?
   account_email          String?
   account_city           String?
   account_country        String?
-  account_industry       String?
   account_employees_size Int?
   account_description    String?      @db.Text
   account_account_status Status       @default(ACTIVE)
@@ -65,10 +67,28 @@ model account {
   @@index([account_account_status])
   @@index([account_deleted_at])
   @@index([account_country, account_city])
-  @@index([account_industry])
+  @@index([account_industry_fk])
   @@index([account_parent_fk])
   @@index([account_name])
   @@map("accounts")
+}
+
+model industry {
+  industry_id   String @id @default(uuid())
+  industry_name String @unique
+
+  industry_status Boolean @default(true)
+
+  industry_created_at DateTime  @default(now())
+  industry_updated_at DateTime  @updatedAt
+  industry_deleted_at DateTime?
+
+  accounts account[]
+
+  @@index([industry_name])
+  @@index([industry_status])
+  @@index([industry_deleted_at])
+  @@map("industries")
 }
 
 model contact {

@@ -57,6 +57,8 @@ const Accounts = () => {
   const [accountsData, setAccountsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -64,17 +66,19 @@ const Accounts = () => {
     }, 300); // 300ms debounce for search
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  }, [searchTerm, currentPage]);
 
   const fetchAccounts = async () => {
     try {
       setLoading(true);
-      const query = searchTerm
-        ? `?search=${encodeURIComponent(searchTerm)}`
-        : "";
+      const query = `?page=${currentPage}&limit=${limit}${
+        searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ""
+      }`;
+      console.log(query);
       const response = await api.get(`/api/accounts${query}`);
       if (response.success) {
         setAccountsData(response.data);
+        console.log("response Data", response.data);
         setTotalRecords(response.pagination.totalRecords);
       }
     } catch (error) {
@@ -194,7 +198,7 @@ const Accounts = () => {
                   <th className="border-r border-b border-slate-200 px-4 py-3 bg-slate-50 w-12 min-w-[48px] max-w-[48px] text-center z-20">
                     <input
                       type="checkbox"
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       checked={selectAll}
                       onChange={toggleSelectAll}
                     />
@@ -244,12 +248,12 @@ const Accounts = () => {
                   accountsData.map((acc, index) => (
                     <tr
                       key={acc.account_id}
-                      className={`hover:bg-blue-50/50 transition-colors group ${selectedRows.includes(acc.account_id) ? "bg-blue-50/30" : ""}`}
+                      className={`hover:bg-blue-50/50 group ${selectedRows.includes(acc.account_id) ? "bg-blue-50/30" : ""}`}
                     >
                       <td className="border-r border-slate-100 px-4 py-3 text-center">
                         <input
                           type="checkbox"
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="rounded border-slate-300 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                           checked={selectedRows.includes(acc.account_id)}
                           onChange={() => toggleRow(acc.account_id)}
                         />
@@ -270,7 +274,7 @@ const Accounts = () => {
                         {acc.account_city || "-"}
                       </td>
                       <td
-                        className={`px-4 py-3 text-center sticky right-0 group-hover:bg-blue-50/50 shadow-[-1px_0_0_rgba(241,245,249,1)] transition-colors ${selectedRows.includes(acc.account_id) ? "bg-blue-50/30" : "bg-white"}`}
+                        className={`px-4 py-3 text-center sticky right-0 group-hover:bg-blue-50/50 shadow-[-1px_0_0_rgba(241,245,249,1)] ${selectedRows.includes(acc.account_id) ? "bg-blue-50/30" : "bg-white"}`}
                       >
                         <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
                           <button
@@ -297,14 +301,17 @@ const Accounts = () => {
           {/* Pagination Placeholder */}
           <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
             <span className="text-xs text-slate-500 font-medium">
-              Showing 1 to {accountsData.length} of {totalRecords} records
+              Showing {(currentPage - 1) * limit + 1} to{" "}
+              {Math.min(currentPage * limit, totalRecords)} of {totalRecords}{" "}
+              records
             </span>
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
                 size="sm"
                 className="text-xs px-3 shadow-sm border-slate-300"
-                disabled
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               >
                 Previous
               </Button>
@@ -312,6 +319,8 @@ const Accounts = () => {
                 variant="secondary"
                 size="sm"
                 className="text-xs px-3 shadow-sm border-slate-300"
+                disabled={currentPage * limit >= totalRecords}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
               >
                 Next
               </Button>
@@ -322,7 +331,7 @@ const Accounts = () => {
       <AddAccountModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSave={fetchAccounts}
+        onSuccess={fetchAccounts}
       />
     </div>
   );
