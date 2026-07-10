@@ -44,6 +44,8 @@ export const getAccounts = async (req, res) => {
           industry: {
             select: { industry_name: true },
           },
+          account_billing_address: true,
+          account_shipping_address: true,
         },
       }),
       prisma.account.count({ where }),
@@ -85,6 +87,8 @@ export const getAccountById = async (req, res) => {
         industry: {
           select: { industry_name: true },
         },
+        account_billing_address: true,
+        account_shipping_address: true,
       },
     });
 
@@ -254,28 +258,124 @@ export const createAccount = async (req, res) => {
 export const updateAccount = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const {
+      account_name,
+      account_owner_fk,
+      account_industry,
+      account_employees_size,
+      account_city,
+      account_website,
+      account_type,
+      account_phone,
+      account_email,
+      account_country,
+      account_description,
+      account_account_status,
+      account_annual_revenue,
+      account_parent_fk,
+      billing_street,
+      billing_city,
+      billing_state,
+      billing_zip,
+      billing_country,
+      shipping_street,
+      shipping_city,
+      shipping_state,
+      shipping_zip,
+      shipping_country,
+    } = req.body;
 
-    // Convert employee size to number if present in update
-    if (updateData.account_employees_size) {
-      updateData.account_employees_size = Number(
-        updateData.account_employees_size,
-      );
+    const dataToUpdate = {};
+
+    if (account_name !== undefined) dataToUpdate.account_name = account_name;
+    
+    if (account_owner_fk) {
+      dataToUpdate.owner = { connect: { user_id: account_owner_fk } };
     }
 
-    if (updateData.account_industry) {
+    if (account_employees_size !== undefined) {
+      dataToUpdate.account_employees_size = account_employees_size ? Number(account_employees_size) : null;
+    }
+    
+    if (account_annual_revenue !== undefined) {
+      dataToUpdate.account_annual_revenue = account_annual_revenue ? parseFloat(account_annual_revenue) : null;
+    }
+
+    if (account_city !== undefined) dataToUpdate.account_city = account_city;
+    if (account_website !== undefined) dataToUpdate.account_website = account_website;
+    if (account_type !== undefined) dataToUpdate.account_type = account_type || undefined;
+    if (account_phone !== undefined) dataToUpdate.account_phone = account_phone;
+    if (account_email !== undefined) dataToUpdate.account_email = account_email;
+    if (account_country !== undefined) dataToUpdate.account_country = account_country;
+    if (account_description !== undefined) dataToUpdate.account_description = account_description;
+    if (account_account_status !== undefined) dataToUpdate.account_account_status = account_account_status;
+
+    if (account_parent_fk !== undefined) {
+      if (account_parent_fk === null || account_parent_fk === "") {
+        dataToUpdate.account_parent = { disconnect: true };
+      } else {
+        dataToUpdate.account_parent = { connect: { account_id: account_parent_fk } };
+      }
+    }
+
+    if (account_industry) {
       const industry = await prisma.industry.findUnique({
-        where: { industry_name: updateData.account_industry },
+        where: { industry_name: account_industry },
       });
       if (industry) {
-        updateData.account_industry_fk = industry.industry_id;
+        dataToUpdate.industry = { connect: { industry_id: industry.industry_id } };
       }
-      delete updateData.account_industry;
+    } else if (account_industry === "") {
+      dataToUpdate.industry = { disconnect: true };
+    }
+
+    if (
+      billing_street !== undefined ||
+      billing_city !== undefined ||
+      billing_state !== undefined ||
+      billing_zip !== undefined ||
+      billing_country !== undefined
+    ) {
+      const hasBilling = billing_street || billing_city || billing_state || billing_zip || billing_country;
+      dataToUpdate.account_billing_address = hasBilling
+        ? {
+            deleteMany: {},
+            create: {
+              billing_street,
+              billing_city,
+              billing_state,
+              billing_zip,
+              billing_country,
+            },
+          }
+        : { deleteMany: {} };
+    }
+
+    if (
+      shipping_street !== undefined ||
+      shipping_city !== undefined ||
+      shipping_state !== undefined ||
+      shipping_zip !== undefined ||
+      shipping_country !== undefined
+    ) {
+      const hasShipping = shipping_street || shipping_city || shipping_state || shipping_zip || shipping_country;
+      dataToUpdate.account_shipping_address = hasShipping
+        ? {
+            deleteMany: {},
+            create: {
+              shipping_street,
+              shipping_city,
+              shipping_state,
+              shipping_zip,
+              shipping_country,
+            },
+          }
+        : { deleteMany: {} };
     }
 
     const updatedAccount = await prisma.account.update({
       where: { account_id: id },
-      data: updateData,
+      data: dataToUpdate,
     });
 
     res.status(200).json({

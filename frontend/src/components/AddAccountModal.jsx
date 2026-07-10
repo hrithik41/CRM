@@ -3,10 +3,12 @@ import { X, Loader2, User } from "lucide-react";
 import Button from "./ui/button";
 import Modal from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
+
+
 import { api } from "../utils/api";
 import { INDUSTRIES } from "../data/industries";
 import toast from "react-hot-toast";
-const AddAccountModal = ({ isOpen, onClose, onSuccess }) => {
+const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [ownerName, setOwnerName] = useState("");
@@ -14,7 +16,9 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess }) => {
   const [accountTypes, setAccountTypes] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const getInputClass = (fieldName) => `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all text-sm ${fieldErrors[fieldName] ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : 'border-slate-300 focus:ring-blue-500/20 focus:border-blue-500'}`;
+
+  const getInputClass = (fieldName) =>
+    `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all text-sm ${fieldErrors[fieldName] ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300 focus:ring-blue-500/20 focus:border-blue-500"}`;
 
   const [formData, setFormData] = useState({
     account_name: "",
@@ -44,6 +48,58 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess }) => {
     shipping_zip: "",
     shipping_country: "",
   });
+
+  useEffect(() => {
+    if (accountToEdit) {
+      const billing = accountToEdit.account_billing_address?.[0] || {};
+      const shipping = accountToEdit.account_shipping_address?.[0] || {};
+
+      setFormData({
+        ...accountToEdit,
+        billing_street: billing.billing_street || "",
+        billing_city: billing.billing_city || "",
+        billing_state: billing.billing_state || "",
+        billing_zip: billing.billing_zip || "",
+        billing_country: billing.billing_country || "",
+        shipping_street: shipping.shipping_street || "",
+        shipping_city: shipping.shipping_city || "",
+        shipping_state: shipping.shipping_state || "",
+        shipping_zip: shipping.shipping_zip || "",
+        shipping_country: shipping.shipping_country || "",
+      });
+      setOwnerId(accountToEdit.account_owner_fk);
+    } else {
+      setFormData({
+        account_name: "",
+        account_type: "",
+        account_phone: "",
+        account_website: "",
+        account_email: "",
+        account_city: "",
+        account_country: "",
+        account_industry: "",
+        account_employees_size: "",
+        account_description: "",
+        account_account_status: "ACTIVE",
+        account_annual_revenue: "",
+
+        // Billing
+        billing_street: "",
+        billing_city: "",
+        billing_state: "",
+        billing_zip: "",
+        billing_country: "",
+
+        // Shipping
+        shipping_street: "",
+        shipping_city: "",
+        shipping_state: "",
+        shipping_zip: "",
+        shipping_country: "",
+      });
+      setOwnerId("");
+    }
+  }, [accountToEdit]);
 
   useEffect(() => {
     const fetchAccountTypes = async () => {
@@ -99,21 +155,30 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess }) => {
       if (!formData.account_name) {
         newErrors.account_name = true;
       }
-      
-      if (formData.account_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.account_email)) {
+
+      if (
+        formData.account_email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.account_email)
+      ) {
         newErrors.account_email = true;
       }
-      if (formData.account_phone && !/^[0-9]{10}$/.test(formData.account_phone)) {
+      if (
+        formData.account_phone &&
+        !/^[0-9]{10}$/.test(formData.account_phone)
+      ) {
         newErrors.account_phone = true;
       }
 
       if (Object.keys(newErrors).length > 0) {
         setFieldErrors(newErrors);
         if (newErrors.account_name) toast.error("Account name is required.");
-        else if (newErrors.account_type) toast.error("Please select an Account Type.");
-        else if (newErrors.account_email) toast.error("Please enter a valid email address.");
-        else if (newErrors.account_phone) toast.error("Please enter a valid phone number.");
-        
+        else if (newErrors.account_type)
+          toast.error("Please select an Account Type.");
+        else if (newErrors.account_email)
+          toast.error("Please enter a valid email address.");
+        else if (newErrors.account_phone)
+          toast.error("Please enter a valid phone number.");
+
         setLoading(false);
         return;
       }
@@ -123,15 +188,33 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess }) => {
         account_owner_fk: ownerId,
       };
 
-      const response = await api.post("/api/accounts", payload);
+      let response;
+      if (accountToEdit) {
+        response = await api.put(
+          `/api/accounts/${accountToEdit.account_id}`,
+          payload,
+        );
+      } else {
+        response = await api.post("/api/accounts", payload);
+      }
 
       if (response.success) {
+        toast.success(
+          accountToEdit
+            ? "Account updated successfully!"
+            : "Account created successfully!",
+        );
         document.body.style.overflow = "hidden";
         setFieldErrors({});
         onSuccess(); // Refresh the table
         onClose(); // Close the modal
       } else {
-        toast.error(response.message || "Failed to create account");
+        toast.error(
+          response.message ||
+            (accountToEdit
+              ? "Failed to update account"
+              : "Failed to create account"),
+        );
         setError(response.message || "Failed to create account");
       }
     } catch (err) {
@@ -181,7 +264,7 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Add New Account"
+      title={accountToEdit ? "Edit Account" : "Add New Account"}
       widthClass="w-[60vw]"
       headerActions={headerActions}
       footer={footerActions}
@@ -225,7 +308,8 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess }) => {
                     value={formData.account_type}
                     onChange={(val) => {
                       setFormData({ ...formData, account_type: val });
-                      if (fieldErrors.account_type) setFieldErrors({ ...fieldErrors, account_type: false });
+                      if (fieldErrors.account_type)
+                        setFieldErrors({ ...fieldErrors, account_type: false });
                     }}
                     placeholder="Select Account Type"
                     hasError={fieldErrors.account_type}

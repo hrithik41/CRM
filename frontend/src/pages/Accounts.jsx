@@ -12,6 +12,7 @@ import {
 import AddAccountModal from "../components/AddAccountModal";
 import Button from "../components/ui/button";
 import { api } from "../utils/api";
+import AccountDetailView from "../components/AccDetailView";
 
 const ResizableHeader = ({ children, initialWidth }) => {
   const [width, setWidth] = useState(initialWidth || 150);
@@ -59,6 +60,8 @@ const Accounts = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [accountToEdit, setAccountToEdit] = useState(null);
+  const [viewAccountId, setViewAccountId] = useState(null);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -112,7 +115,7 @@ const Accounts = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 animate-fade-in">
+    <div className="flex flex-col h-full bg-slate-50 animate-fade-in relative overflow-hidden">
       {/* Section 1: Header */}
       <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-slate-200 shadow-sm z-10 shrink-0">
         <div className="flex flex-col">
@@ -248,9 +251,13 @@ const Accounts = () => {
                   accountsData.map((acc, index) => (
                     <tr
                       key={acc.account_id}
-                      className={`hover:bg-blue-50/50 group ${selectedRows.includes(acc.account_id) ? "bg-blue-50/30" : ""}`}
+                      onClick={() => setViewAccountId(acc.account_id)}
+                      className={`hover:bg-blue-50/50 group cursor-pointer ${selectedRows.includes(acc.account_id) ? "bg-blue-50/30" : ""}`}
                     >
-                      <td className="border-r border-slate-100 px-4 py-3 text-center">
+                      <td 
+                        className="border-r border-slate-100 px-4 py-3 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <input
                           type="checkbox"
                           className="rounded border-slate-300 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
@@ -280,12 +287,21 @@ const Accounts = () => {
                           <button
                             className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 transition-colors cursor-pointer"
                             title="View"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewAccountId(acc.account_id);
+                            }}
                           >
                             <Eye size={14} />
                           </button>
                           <button
                             className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 transition-colors cursor-pointer"
                             title="Edit"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAccountToEdit(acc);
+                              setIsAddModalOpen(true);
+                            }}
                           >
                             <Edit2 size={14} />
                           </button>
@@ -330,8 +346,18 @@ const Accounts = () => {
       </div>
       <AddAccountModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setAccountToEdit(null);
+        }}
         onSuccess={fetchAccounts}
+        accountToEdit={accountToEdit}
+      />
+      
+      <AccountDetailView 
+        isOpen={!!viewAccountId} 
+        onClose={() => setViewAccountId(null)} 
+        accountId={viewAccountId} 
       />
     </div>
   );

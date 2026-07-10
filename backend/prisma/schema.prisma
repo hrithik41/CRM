@@ -18,11 +18,12 @@ model user {
   user_updated_at DateTime   @updatedAt
   user_deleted_at DateTime?
 
-  user_accounts      account[]     @relation("account")
-  user_contacts      contact[]     @relation("contact_user")
-  user_opportunities opportunity[] @relation("user")
-  user_campaigns     campaign[]    @relation("campaign_user")
-  user_tasks         task[]        @relation("task_user")
+  user_accounts       account[]     @relation("account")
+  user_contacts       contact[]     @relation("contact_user")
+  user_owned_contacts contact[]     @relation("contact_owner")
+  user_opportunities  opportunity[] @relation("user")
+  user_campaigns      campaign[]    @relation("campaign_user")
+  user_tasks          task[]        @relation("task_user")
 
   @@index([user_status])
   @@index([user_deleted_at])
@@ -49,13 +50,13 @@ model account {
   account_city           String?
   account_country        String?
   account_employees_size Int?
-  account_description    String?      @db.Text
-  account_account_status Status       @default(ACTIVE)
-  account_annual_revenue Decimal?     @db.Decimal(18, 2)
+  account_description    String?       @db.Text
+  account_account_status Status        @default(ACTIVE)
+  account_annual_revenue Decimal?      @db.Decimal(18, 2)
   account_parent_fk      String?
-  account_parent         account?     @relation("account_parent", fields: [account_parent_fk], references: [account_id])
-  account_created_at     DateTime     @default(now())
-  account_updated_at     DateTime     @updatedAt
+  account_parent         account?      @relation("account_parent", fields: [account_parent_fk], references: [account_id])
+  account_created_at     DateTime      @default(now())
+  account_updated_at     DateTime      @updatedAt
   account_deleted_at     DateTime?
 
   account_contacts         contact[]  @relation("account_contacts")
@@ -84,6 +85,7 @@ model industry {
   industry_deleted_at DateTime?
 
   accounts account[]
+  contacts contact[]
 
   @@index([industry_name])
   @@index([industry_status])
@@ -92,11 +94,72 @@ model industry {
 }
 
 model contact {
-  contact_id         String   @id @default(uuid())
-  contact_user_fk    String?
-  user               user?    @relation("contact_user", fields: [contact_user_fk], references: [user_id])
+  contact_id String @id @default(uuid())
+
+  contact_user_fk String?
+  user            user?   @relation("contact_user", fields: [contact_user_fk], references: [user_id])
+
   contact_account_fk String?
   account            account? @relation("account_contacts", fields: [contact_account_fk], references: [account_id])
+
+  contact_owner_fk String?
+  contact_owner    user?   @relation("contact_owner", fields: [contact_owner_fk], references: [user_id])
+
+  contact_industry_fk String?
+  contact_industry    industry? @relation(fields: [contact_industry_fk], references: [industry_id])
+
+  contact_project_fk String?
+  contact_project    project? @relation(fields: [contact_project_fk], references: [project_id])
+
+  contact_campaign_fk String?
+  contact_campaign    campaign? @relation(fields: [contact_campaign_fk], references: [campaign_id])
+
+  contact_salutation salutation?
+
+  contact_code               String         @unique
+  contact_suffix             String?
+  contact_firstname          String?
+  contact_middlename         String?
+  contact_lastname           String?
+  contact_partner_name       String?
+  contact_reportsto          String?
+  contact_designation        String?
+  contact_role               String?
+  contact_call_status        call_status?
+  contact_email_status       email_status?
+  contact_personal_email     String?
+  contact_professional_email String?
+  contact_phone_status       number_status?
+  contact_alternate_number   String?
+  contact_department         String?
+  contact_mobile_number      String?
+  contact_fax_number         String?
+  contact_landline_number    String?
+  contact_employee_size      String?
+  contact_profile_link       String?
+  contact_navigator_link     String?
+  contact_segment            String?
+  contact_level_field        String?
+  contact_tpid               String?
+  contact_city               String?
+  contact_state              String?
+  contact_country            String?
+  contact_pickup_date        DateTime?
+  contact_pickup_time        String?
+  contact_pickup_location    String?
+  contact_drop_date          DateTime?
+  contact_drop_time          String?
+  contact_drop_location      String?
+  contact_phone              String?
+  contact_title              String?
+  contact_mobile             String?
+  contact_status             Status?        @default(ACTIVE)
+  contact_created_at         DateTime       @default(now())
+  contact_updated_at         DateTime       @updatedAt
+  contact_deleted_at         DateTime?
+
+  contact_account_billing_address  billing[]  @relation("billing_contact")
+  contact_account_shipping_address shipping[] @relation("shipping_contact")
 
   @@index([contact_user_fk])
   @@index([contact_account_fk])
@@ -125,11 +188,22 @@ model task {
   @@index([task_user_fk])
   @@map("tasks")
 }
+  
+model project {
+  project_id   String  @id @default(uuid())
+  project_name String?
+
+  contacts contact[]
+
+  @@map("projects")
+}
 
 model campaign {
   campaign_id      String  @id @default(uuid())
   campaign_user_fk String?
   user             user?   @relation("campaign_user", fields: [campaign_user_fk], references: [user_id])
+
+  contacts contact[]
 
   @@index([campaign_user_fk])
   @@map("campaigns")
@@ -139,6 +213,8 @@ model billing {
   billing_id         String   @id @default(uuid())
   billing_account_fk String?
   account            account? @relation(fields: [billing_account_fk], references: [account_id])
+  billing_contact_fk String?
+  contact            contact? @relation("billing_contact", fields: [billing_contact_fk], references: [contact_id])
   billing_street     String?
   billing_state      String?
   billing_zip        String?
@@ -155,6 +231,8 @@ model shipping {
   shipping_id         String   @id @default(uuid())
   shipping_account_fk String?
   account             account? @relation(fields: [shipping_account_fk], references: [account_id])
+  shipping_contact_fk String?
+  contact             contact? @relation("shipping_contact", fields: [shipping_contact_fk], references: [contact_id])
   shipping_street     String?
   shipping_state      String?
   shipping_zip        String?
@@ -211,3 +289,44 @@ enum account_type {
 //   10000
 //   10000+
 // }
+
+enum call_status {
+  RINGING
+  PITCH_DONE
+  NOT_INTERESTED
+  NOT_RELEVANT
+  LEFT_ORGANIZATION
+  NOT_AVAILABLE
+  CONNECTED
+  NOT_CONNECTED
+  WRONG_NUMBER
+  DNC
+}
+
+enum email_status {
+  GENERATED
+  NOT_FOUND
+  PENDING
+  RECHECKED
+  VALID
+  INVALID
+  BOUNCE
+}
+
+enum number_status {
+  GENERATED
+  NOT_FOUND
+  PENDING
+  RECHECKED
+  VALID
+  INVALID
+  BOUNCE
+}
+
+enum salutation {
+  MR
+  MRS
+  MS
+  DR
+  PROF
+}

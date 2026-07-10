@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -8,11 +8,29 @@ import {
   Layers, 
   Megaphone, 
   ListChecks,
+  Calendar,
+  BarChart2,
+  Settings,
+  Zap,
+  PlusCircle,
+  UserPlus,
+  Phone,
+  CheckSquare,
+  Sparkles,
+  ChevronDown,
   LogOut
 } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
 
   const navItems = [
     { name: 'Home', path: '/v2/dashboard', icon: Home },
@@ -22,25 +40,35 @@ const Sidebar = () => {
     { name: 'Projects', path: '/v2/projects', icon: Layers },
     { name: 'Campaigns', path: '/v2/campaigns', icon: Megaphone },
     { name: 'Tasks', path: '/v2/tasks', icon: ListChecks },
+    { name: 'Calendar', path: '/v2/calendar', icon: Calendar },
+    { name: 'Reports', path: '/v2/reports', icon: BarChart2 },
+    { name: 'Settings', path: '/v2/settings', icon: Settings },
+  ];
+
+  const quickActions = [
+    { name: 'Add Account', icon: PlusCircle },
+    { name: 'Add Contact', icon: UserPlus },
+    { name: 'Log a Call', icon: Phone },
+    { name: 'Create Task', icon: CheckSquare },
+    { name: 'New Opportunity', icon: Sparkles },
   ];
 
   return (
-    <div className="w-64 h-full bg-slate-950 border-r border-slate-800 flex flex-col relative z-20">
-      {/* Decorative Blob */}
-      <div className="absolute -top-32 -left-32 w-64 h-64 bg-indigo-600/20 rounded-full blur-[80px] pointer-events-none"></div>
-
+    <div className="w-64 h-full bg-[#111827] flex flex-col relative z-20 font-sans">
+      
       {/* Brand Section */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800/50 backdrop-blur-md bg-slate-950/50 relative z-10">
-        <div className="flex items-center gap-3">
-          <img src="/ubslogo.png" alt="UBS Logo" className="h-6 object-contain" />
+      <div className="h-[72px] flex items-center px-6 shrink-0 relative z-10">
+        <div className="flex items-center gap-2">
+          <img src="/ubslogo.png" alt="UBS Logo" className="h-4 object-contain" />
           <span className="text-white font-bold tracking-wider text-sm uppercase">CRM</span>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 py-6 px-3 overflow-y-auto relative z-10">
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 px-3">Main Menu</div>
-        <nav className="space-y-1.5">
+      <div className="flex-1 py-2 px-3 overflow-y-auto relative z-10 space-y-6 flex flex-col custom-scrollbar">
+        
+        {/* Main Menu */}
+        <nav className="space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             const Icon = item.icon;
@@ -49,33 +77,73 @@ const Sidebar = () => {
               <NavLink
                 key={item.name}
                 to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group ${
+                className={`flex items-center gap-4 px-4 py-2.5 rounded-lg transition-all duration-300 group ${
                   isActive 
-                    ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-[inset_0_0_12px_rgba(99,102,241,0.1)]' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+                    ? 'bg-indigo-600 text-white' 
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
-                <Icon size={18} className={`${isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'} transition-colors duration-300`} />
-                <span className="font-medium text-sm">{item.name}</span>
+                <Icon size={18} className={`${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} transition-colors duration-300`} />
+                <span className={`font-medium text-[13px] ${isActive ? 'font-semibold' : ''}`}>{item.name}</span>
               </NavLink>
             );
           })}
         </nav>
+
+        {/* Divider */}
+        <div className="px-4">
+          <div className="h-px bg-slate-800/60 w-full"></div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="pb-4">
+          <div className="flex items-center gap-2 px-4 mb-3 text-slate-400">
+            <Zap size={14} className="text-slate-400" />
+            <span className="text-[11px] font-bold tracking-wider uppercase">Quick Actions</span>
+          </div>
+          <nav className="space-y-1">
+            {quickActions.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.name}
+                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-slate-300 hover:text-white transition-all duration-300 group"
+                >
+                  <Icon size={18} className="text-slate-400 group-hover:text-white transition-colors duration-300" />
+                  <span className="font-medium text-[13px] text-left">{item.name}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
-      {/* Bottom Action */}
-      <div className="p-4 border-t border-slate-800/50 relative z-10">
+      {/* User Profile Section */}
+      <div className="p-4 border-t border-slate-800 bg-[#0f172a] shrink-0">
         <button 
           onClick={() => {
-            localStorage.removeItem('user');
-            window.location.href = '/v2/login';
+            if (window.confirm("Are you sure you want to log out?")) {
+              localStorage.removeItem('user');
+              window.location.href = '/v2/login';
+            }
           }}
-          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 border border-white/10 hover:border-red-500/20 text-slate-300 transition-all duration-300 text-sm font-medium group"
+          className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-white/5 transition-colors text-left"
         >
-          <LogOut size={16} className="text-slate-400 group-hover:text-red-400 transition-colors" />
-          Sign Out
+          <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+            {user ? (user.user_name || user.name || "U").substring(0, 2).toUpperCase() : "US"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold text-white truncate">
+              {user ? (user.user_name || user.name) : "Onsite System"}
+            </p>
+            <p className="text-[11px] text-slate-400 truncate">
+              {user ? user.user_role : "Administrator"}
+            </p>
+          </div>
+          <ChevronDown size={16} className="text-slate-500 shrink-0" />
         </button>
       </div>
+      
     </div>
   );
 };

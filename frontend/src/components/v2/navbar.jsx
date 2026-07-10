@@ -3,7 +3,7 @@ import {
   Search, 
   Clock, 
   Bell, 
-  Layers 
+  Grid
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -26,48 +26,54 @@ const Navbar = () => {
   };
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200 bg-white/70 backdrop-blur-xl sticky top-0 z-30">
+    <header className="h-[72px] flex items-center justify-between px-6 bg-white border-b border-slate-100 sticky top-0 z-30 shrink-0">
       
       {/* Search Bar */}
-      <div className="flex-1 max-w-xl">
-        <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size={16} className="text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+      <div className="flex-1 max-w-3xl">
+        <div className="relative group flex items-center">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Search size={18} className="text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
           </div>
           <input
             type="text"
-            placeholder="Search accounts, contacts, or opportunities..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all duration-300"
+            placeholder="Search accounts, contacts, opportunities..."
+            className="w-full pl-10 pr-16 py-2.5 bg-white border border-slate-200 rounded-xl text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
           />
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            {/* <div className="flex items-center justify-center px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded shadow-sm border border-slate-200">
+              ⌘ K
+            </div> */}
+          </div>
         </div>
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-4 ml-6">
+      <div className="flex items-center gap-5 ml-6">
         
-        {/* Onsite System Button */}
-        <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-sm font-semibold transition-colors duration-300 border border-indigo-100">
-          <Layers size={16} />
-          Onsite System
+        {/* Icons */}
+        <button className="relative text-slate-500 hover:text-indigo-600 transition-colors p-1">
+          <Bell size={22} strokeWidth={2} />
+          <span className="absolute -top-1 -right-1.5 w-[18px] h-[18px] bg-red-500 rounded-full border-[2px] border-white flex items-center justify-center text-[9px] font-bold text-white leading-none">
+            3
+          </span>
         </button>
 
-        {/* Icon Actions */}
-        <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
-          <button className="p-2 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300">
-            <Clock size={18} />
+        <button className="text-slate-500 hover:text-indigo-600 transition-colors p-1">
+          <Clock size={22} strokeWidth={2} />
+        </button>
+
+        <button className="text-slate-500 hover:text-indigo-600 transition-colors p-1 mr-1">
+          <Grid size={22} strokeWidth={2} />
+        </button>
+
+        {/* Profile Avatar */}
+        <div className="relative ml-2">
+          <button className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[13px] font-bold shadow-sm transition-transform hover:scale-105 active:scale-95">
+            {user ? getInitials(user.user_name || user.name) : "US"}
           </button>
-          <button className="p-2 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 relative">
-            <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-          </button>
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-[2px] border-white"></span>
         </div>
 
-        {/* Profile */}
-        <div className="flex items-center gap-3 pl-2">
-          <button className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white text-sm font-bold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 border border-white">
-            {user ? getInitials(user.name) : "US"}
-          </button>
-        </div>
       </div>
     </header>
   );
