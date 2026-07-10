@@ -1,10 +1,17 @@
-import { prisma } from "../src/lib/prisma.js";
-
-async function main() {
+export async function seedAccounts(prisma) {
   const user = await prisma.user.findFirst();
-  
+  const industries = await prisma.industry.findMany();
+  const industryMap = new Map(
+    industries.map((industry) => [
+      industry.industry_name,
+      industry.industry_id,
+    ]),
+  );
+
   if (!user) {
-    throw new Error("No users found! Please run 'npm run seed' first to create users.");
+    throw new Error(
+      "No users found! Please run 'npm run seed' first to create users.",
+    );
   }
 
   const ownerId = user.user_id;
@@ -13,73 +20,77 @@ async function main() {
     {
       account_code: "ACC-000001",
       account_name: "Google India",
-      account_industry: "Technology",
+      industry: "Technology",
       account_city: "Bengaluru",
     },
     {
       account_code: "ACC-000002",
       account_name: "Microsoft India",
-      account_industry: "Software",
+      industry: "Software",
       account_city: "Hyderabad",
     },
     {
       account_code: "ACC-000003",
       account_name: "Amazon India",
-      account_industry: "E-Commerce",
+      industry: "E-Commerce",
       account_city: "Bengaluru",
     },
     {
       account_code: "ACC-000004",
       account_name: "Reliance Industries",
-      account_industry: "Oil & Gas",
+      industry: "Oil & Gas",
       account_city: "Mumbai",
     },
     {
       account_code: "ACC-000005",
       account_name: "Tata Consultancy Services",
-      account_industry: "IT Services",
+      industry: "IT Services",
       account_city: "Mumbai",
     },
     {
       account_code: "ACC-000006",
       account_name: "Infosys",
-      account_industry: "IT Services",
+      industry: "IT Services",
       account_city: "Bengaluru",
     },
     {
       account_code: "ACC-000007",
       account_name: "HDFC Bank",
-      account_industry: "Banking",
+      industry: "Banking",
       account_city: "Mumbai",
     },
     {
       account_code: "ACC-000008",
       account_name: "Adani Enterprises",
-      account_industry: "Infrastructure",
+      industry: "Infrastructure",
       account_city: "Ahmedabad",
     },
     {
       account_code: "ACC-000009",
       account_name: "Wipro",
-      account_industry: "Technology",
+      industry: "Technology",
       account_city: "Bengaluru",
     },
     {
       account_code: "ACC-000010",
       account_name: "Mahindra & Mahindra",
-      account_industry: "Automobile",
+      industry: "Automobile",
       account_city: "Mumbai",
     },
   ];
 
   for (const account of accounts) {
+    const { industry, ...accountData } = account;
+    const industryId = industryMap.get(industry);
+
     await prisma.account.upsert({
       where: {
         account_code: account.account_code,
       },
       update: {},
       create: {
-        ...account,
+        ...accountData,
+        account_industry_fk: industryId || null,
         account_owner_fk: ownerId,
       },
     });
@@ -87,12 +98,3 @@ async function main() {
 
   console.log("✅ Account seed completed.");
 }
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });

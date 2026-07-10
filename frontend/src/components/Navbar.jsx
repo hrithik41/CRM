@@ -52,7 +52,8 @@ const Navbar = () => {
           <img
             src="/ubslogo.png"
             alt="UBS Logo"
-            className="h-5 object-contain"
+            className="h-5 object-contain cursor-pointer"
+            onClick={() => navigate("/dashboard")}
             onError={(e) => {
               e.target.onerror = null;
               e.target.style.display = "none";

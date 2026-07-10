@@ -1,9 +1,10 @@
 import express from "express";
-import { getAccounts, getAccountById, createAccount, updateAccount, deleteAccounts } from "../controllers/account.controller.js";
+import { getAccounts, getAccountById, createAccount, updateAccount, deleteAccounts, getAccountTypes } from "../controllers/account.controller.js";
 
 const router = express.Router();
 
 router.get("/", getAccounts);
+router.get("/types", getAccountTypes);
 router.get("/:id", getAccountById);
 router.post("/", createAccount);
 router.put("/:id", updateAccount);

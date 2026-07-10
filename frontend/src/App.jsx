@@ -30,14 +30,14 @@ const App = () => {
       </Route>
 
       <Route path="/v2" element={<DashboardV2Layout />}>
-        <Route path="dashboard" element={<DashboardV2 />} />
+        <Route path="/v2/dashboard" element={<DashboardV2 />} />
         {/* Placeholder mappings for other sidebar links so they render inside the V2 layout */}
-        <Route path="contacts" element={<Contacts />} />
-        <Route path="accounts" element={<Accounts />} />
-        <Route path="opportunities" element={<Opportunities />} />
-        <Route path="projects" element={<Projects />} />
-        <Route path="campaigns" element={<Campaigns />} />
-        <Route path="tasks" element={<Tasks />} />
+        <Route path="/v2/contacts" element={<Contacts />} />
+        <Route path="/v2/accounts" element={<Accounts />} />
+        <Route path="/v2/opportunities" element={<Opportunities />} />
+        <Route path="/v2/projects" element={<Projects />} />
+        <Route path="/v2/campaigns" element={<Campaigns />} />
+        <Route path="/v2/tasks" element={<Tasks />} />
       </Route>
 
       <Route element={<DashboardLayout />}>
