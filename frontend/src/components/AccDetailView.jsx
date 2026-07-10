@@ -84,17 +84,24 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
                 {/* Tabs */}
                 <div className="bg-white rounded-lg shadow-sm border border-slate-200">
                   <div className="flex border-b border-slate-200 px-4 overflow-x-auto custom-scrollbar">
-                    {['Details', 'Contacts (0)', 'Opportunities (0)', 'Member Accounts (0)', 'Activity', 'Chatter'].map((tab) => (
+                    {[
+                      { id: 'Details', label: 'Details' },
+                      { id: 'Contacts', label: `Contacts (${accountData.account_contacts?.length || 0})` },
+                      { id: 'Opportunities', label: 'Opportunities (0)' },
+                      { id: 'Member Accounts', label: 'Member Accounts (0)' },
+                      { id: 'Activity', label: 'Activity' },
+                      { id: 'Chatter', label: 'Chatter' }
+                    ].map((tab) => (
                       <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
                         className={`px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
-                          activeTab === tab
+                          activeTab === tab.id
                             ? 'border-blue-600 text-blue-700'
                             : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
                         }`}
                       >
-                        {tab}
+                        {tab.label}
                       </button>
                     ))}
                   </div>
@@ -141,7 +148,40 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
 
                     </div>
                   )}
-                  {activeTab !== "Details" && (
+                  {activeTab === "Contacts" && (
+                    <div className="p-0">
+                      {accountData.account_contacts?.length > 0 ? (
+                        <div className="divide-y divide-slate-200">
+                          {accountData.account_contacts.map(contact => (
+                            <div key={contact.contact_id} className="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center group">
+                               <div className="flex items-center gap-4">
+                                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold uppercase">
+                                     {contact.contact_firstname?.[0] || ''}{contact.contact_lastname?.[0] || ''}
+                                  </div>
+                                  <div>
+                                     <div className="font-semibold text-sm text-blue-600 group-hover:underline cursor-pointer">
+                                        {contact.contact_firstname} {contact.contact_lastname}
+                                     </div>
+                                     <div className="text-xs text-slate-500 mt-0.5">
+                                        {contact.contact_designation || 'No Designation'} {contact.contact_professional_email ? `• ${contact.contact_professional_email}` : ''}
+                                     </div>
+                                  </div>
+                               </div>
+                               <div className="text-right">
+                                  <div className="text-xs font-medium text-slate-700">{contact.contact_mobile || contact.contact_phone || 'No Phone'}</div>
+                                  <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">{contact.contact_status || 'ACTIVE'}</div>
+                               </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center text-sm font-semibold text-slate-500">
+                           No contacts associated with this account.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {activeTab !== "Details" && activeTab !== "Contacts" && (
                      <div className="p-8 text-center text-sm font-semibold text-slate-500">
                         {activeTab} content will go here.
                      </div>
@@ -155,11 +195,19 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
                 {/* Related Card */}
                 <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                   <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider bg-slate-50">
-                    <Users size={14} className="text-[#0066cc]" /> RELATED
+                    <Users size={14} className="text-[#0066cc]" /> RELATED CONTACTS
                   </div>
                   <div className="divide-y divide-slate-100">
-                    <RelatedItem name="Shankar Omandhu" />
-                    <RelatedItem name="Vaishali Maitra" />
+                    {accountData.account_contacts?.length > 0 ? (
+                      accountData.account_contacts.slice(0, 5).map(contact => (
+                        <RelatedItem 
+                          key={contact.contact_id} 
+                          name={`${contact.contact_firstname || ''} ${contact.contact_lastname || ''}`.trim() || 'Unknown'} 
+                        />
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-slate-500">No related contacts found.</div>
+                    )}
                   </div>
                 </div>
 

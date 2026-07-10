@@ -24,6 +24,7 @@ model user {
   user_opportunities  opportunity[] @relation("user")
   user_campaigns      campaign[]    @relation("campaign_user")
   user_tasks          task[]        @relation("task_user")
+  opportunities       opportunity[]
 
   @@index([user_status])
   @@index([user_deleted_at])
@@ -59,10 +60,11 @@ model account {
   account_updated_at     DateTime      @updatedAt
   account_deleted_at     DateTime?
 
-  account_contacts         contact[]  @relation("account_contacts")
+  account_contacts         contact[]     @relation("account_contacts")
   account_billing_address  billing[]
   account_shipping_address shipping[]
-  account_children         account[]  @relation("account_parent")
+  account_children         account[]     @relation("account_parent")
+  opportunities            opportunity[]
 
   @@index([account_owner_fk])
   @@index([account_account_status])
@@ -158,8 +160,9 @@ model contact {
   contact_updated_at         DateTime       @updatedAt
   contact_deleted_at         DateTime?
 
-  contact_account_billing_address  billing[]  @relation("billing_contact")
-  contact_account_shipping_address shipping[] @relation("shipping_contact")
+  contact_account_billing_address  billing[]     @relation("billing_contact")
+  contact_account_shipping_address shipping[]    @relation("shipping_contact")
+  opportunities                    opportunity[]
 
   @@index([contact_user_fk])
   @@index([contact_account_fk])
@@ -167,7 +170,16 @@ model contact {
 }
 
 model opportunity {
-  opportunity_id         String   @id @default(uuid())
+  opportunity_id       String @id @default(uuid())
+  opportunity_owner_fk String
+  opportunity_owner    user   @relation(fields: [opportunity_owner_fk], references: [user_id])
+
+  opportunity_account_fk String?
+  opportunity_account    account? @relation(fields: [opportunity_account_fk], references: [account_id])
+
+  opportunity_contact_fk String?
+  opportunity_contact    contact? @relation(fields: [opportunity_contact_fk], references: [contact_id])
+
   opportunity_name       String
   opportunity_stage      String
   opportunity_value      Float
@@ -188,7 +200,7 @@ model task {
   @@index([task_user_fk])
   @@map("tasks")
 }
-  
+
 model project {
   project_id   String  @id @default(uuid())
   project_name String?

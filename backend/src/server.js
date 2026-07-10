@@ -21,6 +21,16 @@ app.get("/", (req, res) => {
   res.send("CRM API Running");
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+});
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${port} is already in use!`);
+    console.error(`This usually happens if another terminal is running the server, or nodemon restarted too quickly.`);
+    process.exit(1); // Force a crash so nodemon doesn't say "clean exit"
+  } else {
+    console.error('❌ Server error:', error);
+  }
 });
