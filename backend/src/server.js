@@ -2,6 +2,9 @@ import express from "express";
 import authRoutes from "./routes/auth.routes.js";
 import accountRoutes from "./routes/account.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
+import opportunityRoutes from "./routes/opportunity.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import projectRoutes from "./routes/project.routes.js";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -14,8 +17,11 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/contacts", contactRoutes);
+app.use("/api/opportunities", opportunityRoutes);
+app.use("/api/projects", projectRoutes);
 
 app.get("/", (req, res) => {
   res.send("CRM API Running");

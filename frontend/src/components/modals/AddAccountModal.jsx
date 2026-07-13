@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2, User } from "lucide-react";
-import Button from "./ui/button";
-import Modal from "./ui/Modal";
-import SearchableSelect from "./ui/SearchableSelect";
+import Button from "../ui/Button";
+import Modal from "../ui/Modal";
+import SearchableSelect from "../ui/SearchableSelect";
 
-
-import { api } from "../utils/api";
-import { INDUSTRIES } from "../data/industries";
+import { api } from "../../utils/api";
+import { INDUSTRIES } from "../../data/industries";
 import toast from "react-hot-toast";
 const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
   const [loading, setLoading] = useState(false);
@@ -15,7 +14,6 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
   const [ownerId, setOwnerId] = useState("");
   const [accountTypes, setAccountTypes] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
-
 
   const getInputClass = (fieldName) =>
     `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all text-sm ${fieldErrors[fieldName] ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300 focus:ring-blue-500/20 focus:border-blue-500"}`;

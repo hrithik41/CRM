@@ -9,8 +9,8 @@ import {
   Edit2,
   Loader2,
 } from "lucide-react";
-import AddAccountModal from "../components/AddAccountModal";
-import Button from "../components/ui/button";
+import AddAccountModal from "../components/modals/AddAccountModal";
+import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import AccountDetailView from "../components/AccDetailView";
 

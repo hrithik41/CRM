@@ -9,9 +9,9 @@ import {
   Edit2,
   Loader2,
 } from "lucide-react";
-import Button from "../components/ui/button";
+import Button from "../components/ui/Button";
 import { api } from "../utils/api";
-import AddContactModal from "../components/AddContactModal";
+import AddContactModal from "../components/modals/AddContactModal";
 
 const ResizableHeader = ({ children, initialWidth }) => {
   const [width, setWidth] = useState(initialWidth || 150);
