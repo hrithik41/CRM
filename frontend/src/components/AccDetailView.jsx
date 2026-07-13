@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../utils/api";
 import { Users, Target, MoreHorizontal, Edit2 } from "lucide-react";
-import Button from "./ui/button";
+import Button from "./ui/Button";
 
 const AccountDetailView = ({ isOpen, onClose, accountId }) => {
   const [accountData, setAccountData] = useState(null);
