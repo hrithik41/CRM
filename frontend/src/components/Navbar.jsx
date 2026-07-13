@@ -9,8 +9,8 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import SearchBar from "./ui/searchBar";
-import Button from "./ui/button";
+import SearchBar from "./ui/Searchbar";
+import Button from "./ui/Button";
 
 const Navbar = () => {
   const navigate = useNavigate();
