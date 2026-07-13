@@ -12,6 +12,7 @@ import {
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import AddContactModal from "../components/modals/AddContactModal";
+import ConDetailView from "../components/ConDetailView";
 
 const ResizableHeader = ({ children, initialWidth }) => {
   const [width, setWidth] = useState(initialWidth || 150);
@@ -60,6 +61,7 @@ const Contacts = () => {
   const [limit, setLimit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [contactToEdit, setContactToEdit] = useState(null);
+  const [viewContactId, setViewContactId] = useState(null);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -111,7 +113,7 @@ const Contacts = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 animate-fade-in">
+    <div className="flex flex-col h-full bg-slate-50 animate-fade-in relative overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-slate-200 shadow-sm z-10 shrink-0">
         <div className="flex flex-col">
@@ -285,6 +287,7 @@ const Contacts = () => {
                       >
                         <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
                           <button
+                            onClick={() => setViewContactId(contact.contact_id)}
                             className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 transition-colors"
                             title="View"
                           >
@@ -339,6 +342,13 @@ const Contacts = () => {
           </div>
         </div>
       </div>
+      
+      <ConDetailView 
+        isOpen={!!viewContactId} 
+        onClose={() => setViewContactId(null)} 
+        contactId={viewContactId} 
+      />
+
       <AddContactModal
         isOpen={isAddModalOpen}
         onClose={() => {

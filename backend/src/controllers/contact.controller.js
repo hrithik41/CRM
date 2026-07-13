@@ -146,6 +146,16 @@ export const createContact = async (req, res) => {
       }
     }
 
+    let resolvedOwnerId = contact_owner_fk || null;
+    if (resolvedOwnerId) {
+      const ownerExists = await prisma.user.findUnique({
+        where: { user_id: resolvedOwnerId },
+      });
+      if (!ownerExists) {
+        resolvedOwnerId = null;
+      }
+    }
+
     const newContact = await prisma.contact.create({
       data: {
         contact_code: generatedCode,
@@ -173,7 +183,7 @@ export const createContact = async (req, res) => {
         contact_industry_fk: resolvedIndustryId,
         contact_project_fk: contact_project_fk || null,
         contact_campaign_fk: contact_campaign_fk || null,
-        contact_owner_fk: contact_owner_fk || null,
+        contact_owner_fk: resolvedOwnerId,
 
         contact_call_status: contact_call_status || null,
         contact_email_status: contact_email_status || null,
@@ -333,6 +343,16 @@ export const updateContact = async (req, res) => {
       }
     }
 
+    let resolvedOwnerId = contact_owner_fk || null;
+    if (resolvedOwnerId) {
+      const ownerExists = await prisma.user.findUnique({
+        where: { user_id: resolvedOwnerId },
+      });
+      if (!ownerExists) {
+        resolvedOwnerId = null;
+      }
+    }
+
     await prisma.contact.update({
       where: { contact_id: id },
       data: {
@@ -360,7 +380,7 @@ export const updateContact = async (req, res) => {
         contact_industry_fk: resolvedIndustryId,
         contact_project_fk: contact_project_fk || null,
         contact_campaign_fk: contact_campaign_fk || null,
-        contact_owner_fk: contact_owner_fk || null,
+        contact_owner_fk: resolvedOwnerId,
 
         contact_call_status: contact_call_status || null,
         contact_email_status: contact_email_status || null,
@@ -451,5 +471,31 @@ export const updateContact = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+export const getContactById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const contact = await prisma.contact.findUnique({
+      where: { contact_id: id },
+      include: {
+        account: { select: { account_name: true } },
+        contact_owner: { select: { user_name: true } },
+        contact_industry: { select: { industry_name: true } },
+        contact_project: { select: { project_name: true } },
+        contact_campaign: true,
+        contact_account_billing_address: true,
+        contact_account_shipping_address: true,
+      },
+    });
+
+    if (!contact) {
+      return res.status(404).json({ success: false, message: "Contact not found"});
+    }
+
+    res.status(200).json({ success: true, data: contact });
+  } catch (error) {
+    console.error("Error fetching contact:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
