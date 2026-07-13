@@ -21,9 +21,9 @@ model user {
   user_accounts       account[]     @relation("account")
   user_contacts       contact[]     @relation("contact_user")
   user_owned_contacts contact[]     @relation("contact_owner")
-  user_opportunities  opportunity[] @relation("user")
   user_campaigns      campaign[]    @relation("campaign_user")
   user_tasks          task[]        @relation("task_user")
+  opportunities       opportunity[]
 
   @@index([user_status])
   @@index([user_deleted_at])
@@ -59,10 +59,11 @@ model account {
   account_updated_at     DateTime      @updatedAt
   account_deleted_at     DateTime?
 
-  account_contacts         contact[]  @relation("account_contacts")
+  account_contacts         contact[]     @relation("account_contacts")
   account_billing_address  billing[]
   account_shipping_address shipping[]
-  account_children         account[]  @relation("account_parent")
+  account_children         account[]     @relation("account_parent")
+  opportunities            opportunity[]
 
   @@index([account_owner_fk])
   @@index([account_account_status])
@@ -158,8 +159,9 @@ model contact {
   contact_updated_at         DateTime       @updatedAt
   contact_deleted_at         DateTime?
 
-  contact_account_billing_address  billing[]  @relation("billing_contact")
-  contact_account_shipping_address shipping[] @relation("shipping_contact")
+  contact_account_billing_address  billing[]     @relation("billing_contact")
+  contact_account_shipping_address shipping[]    @relation("shipping_contact")
+  opportunities                    opportunity[]
 
   @@index([contact_user_fk])
   @@index([contact_account_fk])
@@ -167,16 +169,47 @@ model contact {
 }
 
 model opportunity {
-  opportunity_id         String   @id @default(uuid())
+  opportunity_id       String @id @default(uuid())
+  opportunity_owner_fk String
+  opportunity_owner    user   @relation(fields: [opportunity_owner_fk], references: [user_id])
+
+  opportunity_account_fk String?
+  opportunity_account    account? @relation(fields: [opportunity_account_fk], references: [account_id])
+
+  opportunity_contact_fk String?
+  opportunity_contact    contact? @relation(fields: [opportunity_contact_fk], references: [contact_id])
+
+  opportunity_project_id String?
+  opportunity_project    project? @relation(fields: [opportunity_project_id], references: [project_id])
+
+  opportunity_campaign_id String?
+  opportunity_campaign    campaign? @relation(fields: [opportunity_campaign_id], references: [campaign_id])
+
+  opportunity_pitched_at      DateTime?
+  opportunity_call_status     call_status?
+  opportunity_stage           stage?
+  opportunity_type            type?
+  opportunity_engagement_form engagement_form?
+  opportunity_payment_status  payment_status?
+  opportunity_loss_reason     loss_reason?
+
+  opportunity_pickup_date        DateTime?
+  opportunity_pickup_time        String?
+  opportunity_pickup_location    String?
+  opportunity_drop_date          DateTime?
+  opportunity_drop_time          String?
+  opportunity_drop_location      String?
+
   opportunity_name       String
-  opportunity_stage      String
-  opportunity_value      Float
   opportunity_close_date DateTime
   opportunity_created_at DateTime @default(now())
   opportunity_updated_at DateTime @updatedAt
-  owner_id               String?
-  owner                  user?    @relation("user", fields: [owner_id], references: [user_id])
 
+  @@index([opportunity_owner_fk])
+  @@index([opportunity_account_fk])
+  @@index([opportunity_contact_fk])
+  @@index([opportunity_project_id])
+  @@index([opportunity_campaign_id])
   @@map("opportunities")
 }
 
@@ -188,13 +221,28 @@ model task {
   @@index([task_user_fk])
   @@map("tasks")
 }
-  
+
 model project {
   project_id   String  @id @default(uuid())
+
+  project_type type?
+
   project_name String?
+  project_location String
+  project_date DateTime?
+  project_is_active Status?
 
-  contacts contact[]
+  contacts      contact[]
+  opportunities opportunity[]
 
+  project_created_at DateTime @default(now())
+  project_updated_at DateTime @updatedAt
+  project_deleted_at DateTime?
+
+  @@index([project_type])
+  @@index([project_location])
+  @@index([project_date])
+  @@index([project_is_active])
   @@map("projects")
 }
 
@@ -203,7 +251,8 @@ model campaign {
   campaign_user_fk String?
   user             user?   @relation("campaign_user", fields: [campaign_user_fk], references: [user_id])
 
-  contacts contact[]
+  contacts      contact[]
+  opportunities opportunity[]
 
   @@index([campaign_user_fk])
   @@map("campaigns")
@@ -323,10 +372,51 @@ enum number_status {
   BOUNCE
 }
 
+enum payment_status {
+  PENDING
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
 enum salutation {
   MR
   MRS
   MS
   DR
   PROF
+}
+
+enum stage {
+  PITCH_DONE
+  FOLLOW_UP
+  CONTRACT_OUT
+  CLOSSED_WON
+  CLOSED_LOST
+}
+
+
+enum type {
+  INBOUND
+  OUTBOUND
+}
+
+enum engagement_form {
+  DELEGATE
+  SPEAKER
+  SPONSOR
+  MEETING
+  RESEARCH_CALL
+  OPERATION
+}
+
+enum loss_reason {
+  BUDGET_CONSTRAINTS
+  TIMELINE_MISMATCH
+  COMPETITOR_SELECTED
+  NO_DECISION
+  NOT_INTERESTED
+  PRODUCT_FIT
+  INTERNAL_PRIORITIES_CHANGED
+  PRICING
 }

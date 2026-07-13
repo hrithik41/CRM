@@ -89,6 +89,7 @@ export const getAccountById = async (req, res) => {
         },
         account_billing_address: true,
         account_shipping_address: true,
+        account_contacts: true,
       },
     });
 
