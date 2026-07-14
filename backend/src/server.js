@@ -5,6 +5,10 @@ import contactRoutes from "./routes/contact.routes.js";
 import opportunityRoutes from "./routes/opportunity.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import projectRoutes from "./routes/project.routes.js";
+import searchRoutes from "./routes/search.routes.js";
+import callRoutes from "./routes/call.routes.js";
+import taskRoutes from "./routes/task.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -22,6 +26,10 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/calls", callRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("CRM API Running");

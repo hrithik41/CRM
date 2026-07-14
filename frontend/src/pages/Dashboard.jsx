@@ -24,54 +24,33 @@ import {
   Activity,
   User,
 } from "lucide-react";
+import { api } from "../utils/api";
 
 const Dashboard = () => {
-  // Stat Card Mock Data
-  // const stats = [
-  //   {
-  //     title: 'Total Revenue',
-  //     value: '$48,259.00',
-  //     change: '+12.5%',
-  //     isPositive: true,
-  //     icon: DollarSign,
-  //     iconColor: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-  //     sparkline: [20, 35, 30, 45, 50, 42, 60],
-  //   },
-  //   {
-  //     title: 'Active Deals',
-  //     value: '42 Active',
-  //     change: '+8.2%',
-  //     isPositive: true,
-  //     icon: Briefcase,
-  //     iconColor: 'text-indigo-600 bg-indigo-50 border-indigo-100',
-  //     sparkline: [15, 22, 28, 25, 32, 38, 42],
-  //   },
-  //   {
-  //     title: 'New Leads',
-  //     value: '184 Leads',
-  //     change: '-3.1%',
-  //     isPositive: false,
-  //     icon: Users,
-  //     iconColor: 'text-blue-600 bg-blue-50 border-blue-100',
-  //     sparkline: [40, 38, 45, 42, 35, 39, 36],
-  //   },
-  //   {
-  //     title: 'Win Rate',
-  //     value: '24.6%',
-  //     change: '+4.8%',
-  //     isPositive: true,
-  //     icon: Target,
-  //     iconColor: 'text-amber-600 bg-amber-50 border-amber-100',
-  //     sparkline: [18, 20, 21, 23, 22, 24, 24.6],
-  //   },
-  // ]
-
   const [user, setUser] = useState(null);
+  const [metrics, setMetrics] = useState({
+    callsToday: 0,
+    oppsWonThisMonth: 0,
+  });
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+
+      api
+        .get(
+          `/api/dashboard/metrics?user_id=${parsedUser.id || parsedUser.user_id}`,
+        )
+        .then((res) => {
+          if (res.success) {
+            setMetrics(res.data);
+          }
+        })
+        .catch((err) =>
+          console.error("Error fetching dashboard metrics:", err),
+        );
     }
   }, []);
 
@@ -79,6 +58,20 @@ const Dashboard = () => {
     weekday: "long",
     month: "long",
     day: "numeric",
+    year: "numeric",
+  });
+
+  const shortDate = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  const currentMonth = new Date().toLocaleDateString("en-US", {
+    month: "short",
+  });
+  const currentMonthYear = new Date().toLocaleDateString("en-US", {
+    month: "short",
     year: "numeric",
   });
 
@@ -133,14 +126,10 @@ const Dashboard = () => {
 
   const getRoleDisplayName = (role) => {
     if (!role) return "Loading...";
-    return (
-      role
-        .split("_")
-        .map(
-          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
-        )
-        .join(" ")
-    );
+    return role
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
   };
 
   const getRoleTitle = (role) => {
@@ -176,6 +165,29 @@ const Dashboard = () => {
     }
   };
 
+  const getRoleTheme = (role) => {
+    switch (role) {
+      case "SUPER_ADMIN":
+        return { main: "bg-slate-800", textMain: "text-slate-800", textLight: "text-slate-500", border: "border-slate-800", bgLight: "bg-slate-50", borderLight: "border-slate-200" };
+      case "ADMIN":
+        return { main: "bg-indigo-700", textMain: "text-indigo-700", textLight: "text-indigo-500", border: "border-indigo-700", bgLight: "bg-indigo-50", borderLight: "border-indigo-200" };
+      case "SALES":
+        return { main: "bg-emerald-600", textMain: "text-emerald-600", textLight: "text-emerald-500", border: "border-emerald-600", bgLight: "bg-emerald-50", borderLight: "border-emerald-200" };
+      case "DATA":
+        return { main: "bg-blue-600", textMain: "text-blue-600", textLight: "text-blue-500", border: "border-blue-600", bgLight: "bg-blue-50", borderLight: "border-blue-200" };
+      case "PRODUCTION":
+        return { main: "bg-purple-600", textMain: "text-purple-600", textLight: "text-purple-500", border: "border-purple-600", bgLight: "bg-purple-50", borderLight: "border-purple-200" };
+      case "SPONSORSHIP":
+        return { main: "bg-[#8c4600]", textMain: "text-[#b44b00]", textLight: "text-[#b44b00]/80", border: "border-[#b44b00]", bgLight: "bg-[#FFF8F0]", borderLight: "border-[#F0E6DD]" };
+      case "OPERATION":
+        return { main: "bg-teal-600", textMain: "text-teal-600", textLight: "text-teal-500", border: "border-teal-600", bgLight: "bg-teal-50", borderLight: "border-teal-200" };
+      case "USER":
+        return { main: "bg-gray-600", textMain: "text-gray-600", textLight: "text-gray-500", border: "border-gray-600", bgLight: "bg-gray-50", borderLight: "border-gray-200" };
+      default:
+        return { main: "bg-[#8c4600]", textMain: "text-[#b44b00]", textLight: "text-[#b44b00]/80", border: "border-[#b44b00]", bgLight: "bg-[#FFF8F0]", borderLight: "border-[#F0E6DD]" };
+    }
+  };
+
   const getRoleIcon = (role) => {
     switch (role) {
       case "SUPER_ADMIN":
@@ -200,6 +212,7 @@ const Dashboard = () => {
   };
 
   const RoleIcon = getRoleIcon(user?.role);
+  const theme = getRoleTheme(user?.role);
 
   return (
     <div className="animate-slide-up flex flex-col min-h-full bg-slate-50">
@@ -312,12 +325,12 @@ const Dashboard = () => {
         {/* Dynamic Section Header */}
         <div className="flex items-center gap-4 mb-1">
           <div className="flex items-center gap-2">
-            <RoleIcon size={16} className="fill-orange-500 text-orange-500" />
+            <RoleIcon size={16} className={`fill-current ${theme.textMain}`} />
             <h2 className="text-sm font-bold text-slate-600 tracking-widest uppercase">
               {getRoleName(user?.role)}
             </h2>
           </div>
-          <button className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-600 text-xs font-bold rounded-full border border-orange-200 shadow-sm cursor-pointer hover:bg-orange-100 transition-colors">
+          <button className={`flex items-center gap-1.5 px-3 py-1 ${theme.bgLight} ${theme.textMain} text-xs font-bold rounded-full border ${theme.borderLight} shadow-sm cursor-pointer hover:bg-white transition-colors`}>
             <ExternalLink size={12} />
             FULL REPORT
           </button>
@@ -326,28 +339,38 @@ const Dashboard = () => {
         {/* Row 1: 2 Divs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           {/* Calls Today */}
-          {/* <div className="bg-[#FFF8F0] rounded shadow-sm border border-slate-200 border-l-4 border-l-[#b44b00] px-4 py-2 flex flex-col justify-center">
+          <div className={`${theme.bgLight} rounded shadow-sm border ${theme.borderLight} border-l-4 ${theme.border} px-4 py-3 flex flex-col justify-center transition-all hover:shadow-md`}>
             <div className="flex items-center gap-4">
-              <div className="bg-[#8c4600] w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0">
+              <div className={`${theme.main} w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0`}>
                 <Phone size={24} className="fill-white" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[11px] font-bold text-[#b44b00] tracking-wider uppercase mb-0.5">Calls Today</span>
-                <span className="text-3xl font-bold text-[#8c4600] leading-none mb-0.5">0</span>
-                <span className="text-xs text-[#b44b00]/80">06 Jul 2026</span>
+                <span className={`text-[11px] font-bold ${theme.textMain} tracking-wider uppercase mb-0.5`}>
+                  Calls Today
+                </span>
+                <span className={`text-3xl font-bold ${theme.textMain} leading-none mb-0.5`}>
+                  {metrics.callsToday}
+                </span>
+                <span className={`text-xs ${theme.textLight}`}>{shortDate}</span>
               </div>
             </div>
-          </div> */}
+          </div>
 
           {/* Won This Month */}
-          {/* <div className="bg-white rounded shadow-sm border border-slate-200 border-b-4 border-b-orange-500 px-5 py-3 flex flex-col relative overflow-hidden">
-            <div className="absolute top-3 right-4 bg-orange-100 text-orange-600 font-bold text-xs px-2.5 py-0.5 rounded-full shadow-sm">
-              Jul
+          <div className={`bg-white rounded shadow-sm border border-slate-200 border-b-4 ${theme.border} px-5 py-3 flex flex-col relative overflow-hidden transition-all hover:shadow-md`}>
+            <div className={`absolute top-3 right-4 ${theme.bgLight} ${theme.textMain} font-bold text-xs px-2.5 py-0.5 rounded-full shadow-sm border ${theme.borderLight}`}>
+              {currentMonth}
             </div>
-            <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase mb-1.5">Won This Month</span>
-            <span className="text-3xl font-bold text-orange-500 leading-none mb-1">0</span>
-            <span className="text-xs text-slate-400">Closed Won - Jul 2026</span>
-          </div> */}
+            <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase mb-1.5">
+              Won This Month
+            </span>
+            <span className={`text-3xl font-bold ${theme.textMain} leading-none mb-1`}>
+              {metrics.oppsWonThisMonth}
+            </span>
+            <span className="text-xs text-slate-400">
+              Closed Won - {currentMonthYear}
+            </span>
+          </div>
         </div>
 
         {/* Row 2: 4 Divs */}

@@ -1,0 +1,103 @@
+import { prisma } from "../lib/prisma.js";
+
+export const createCall = async (req, res) => {
+  try {
+    const { call_user_fk, call_contact_fk, call_subject, call_description } = req.body;
+
+    const newCall = await prisma.call.create({
+      data: {
+        call_user_fk,
+        call_contact_fk,
+        call_subject,
+        call_description,
+      },
+    });
+
+    res.status(201).json(newCall);
+  } catch (error) {
+    console.error("Error creating call:", error);
+    res.status(500).json({ error: "Failed to create call" });
+  }
+};
+
+export const getCalls = async (req, res) => {
+  try {
+    const { contact_id } = req.query;
+
+    const query = {
+      where: { call_deleted_at: null },
+      include: {
+        user: { select: { user_id: true, user_name: true } },
+      },
+      orderBy: { call_created_at: "desc" },
+    };
+
+    if (contact_id) {
+      query.where.call_contact_fk = contact_id;
+    }
+
+    const calls = await prisma.call.findMany(query);
+    res.status(200).json(calls);
+  } catch (error) {
+    console.error("Error fetching calls:", error);
+    res.status(500).json({ error: "Failed to fetch calls" });
+  }
+};
+
+export const getCallById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const call = await prisma.call.findUnique({
+      where: { call_id: id },
+      include: {
+        user: { select: { user_id: true, user_name: true } },
+        contact: { select: { contact_id: true, contact_firstname: true, contact_lastname: true } },
+        call_tasks: true,
+      },
+    });
+
+    if (!call || call.call_deleted_at) {
+      return res.status(404).json({ error: "Call not found" });
+    }
+
+    res.status(200).json(call);
+  } catch (error) {
+    console.error("Error fetching call:", error);
+    res.status(500).json({ error: "Failed to fetch call" });
+  }
+};
+
+export const updateCall = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updatedCall = await prisma.call.update({
+      where: { call_id: id },
+      data: updateData,
+    });
+
+    res.status(200).json(updatedCall);
+  } catch (error) {
+    console.error("Error updating call:", error);
+    res.status(500).json({ error: "Failed to update call" });
+  }
+};
+
+export const deleteCall = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Soft delete
+    await prisma.call.update({
+      where: { call_id: id },
+      data: { call_deleted_at: new Date() },
+    });
+
+    res.status(200).json({ message: "Call deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting call:", error);
+    res.status(500).json({ error: "Failed to delete call" });
+  }
+};

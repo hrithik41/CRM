@@ -17,7 +17,6 @@ const Navbar = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
 
-
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -94,7 +93,10 @@ const Navbar = () => {
         <Button
           variant="ghost"
           size="nav"
-          active={location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/newdashboard")}
+          active={
+            location.pathname.startsWith("/dashboard") ||
+            location.pathname.startsWith("/newdashboard")
+          }
           className="gap-2 w-[140px]"
           onClick={() => navigate("/dashboard")}
         >
