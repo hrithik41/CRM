@@ -36,7 +36,7 @@ export async function seedOpportunities(prisma) {
       opportunity_close_date: new Date(
         new Date().setMonth(new Date().getMonth() + 2),
       ), // 2 months from now
-      opportunity_stage: "CLOSSED_WON",
+      opportunity_stage: "CLOSED_WON",
       opportunity_type: "OUTBOUND",
       opportunity_engagement_form: "SPONSOR",
       opportunity_payment_status: "PAID",
