@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Download,
   Upload,
@@ -62,6 +63,14 @@ const Accounts = () => {
   const [limit, setLimit] = useState(20);
   const [accountToEdit, setAccountToEdit] = useState(null);
   const [viewAccountId, setViewAccountId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const accountId = searchParams.get("account_id");
+    if (accountId) {
+      setViewAccountId(accountId);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {

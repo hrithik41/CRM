@@ -152,7 +152,7 @@ export const createContact = async (req, res) => {
         where: { user_id: resolvedOwnerId },
       });
       if (!ownerExists) {
-        resolvedOwnerId = null;
+        return res.status(400).json({ success: false, message: "Invalid user session. The logged-in user no longer exists in the database. Please log out and log back in." });
       }
     }
 
@@ -349,7 +349,7 @@ export const updateContact = async (req, res) => {
         where: { user_id: resolvedOwnerId },
       });
       if (!ownerExists) {
-        resolvedOwnerId = null;
+        return res.status(400).json({ success: false, message: "Invalid user session. The logged-in user no longer exists in the database. Please log out and log back in." });
       }
     }
 

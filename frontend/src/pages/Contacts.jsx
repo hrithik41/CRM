@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Download,
   Upload,
@@ -62,8 +63,14 @@ const Contacts = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [contactToEdit, setContactToEdit] = useState(null);
   const [viewContactId, setViewContactId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const contactId = searchParams.get("contact_id");
+    if (contactId) {
+      setViewContactId(contactId);
+    }
     const delayDebounceFn = setTimeout(() => {
       fetchContacts();
     }, 300);
@@ -252,14 +259,30 @@ const Contacts = () => {
                           onChange={() => toggleRow(contact.contact_id)}
                         />
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-3 font-semibold text-[#0066cc] hover:underline cursor-pointer truncate">
+                      <td
+                        className="border-r border-slate-100 px-4 py-3 font-semibold text-[#0066cc] hover:underline cursor-pointer truncate"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setViewContactId(contact.contact_id);
+                        }}
+                      >
                         {`${contact.contact_firstname || ""} ${contact.contact_lastname || ""}`.trim() ||
                           "-"}
                       </td>
                       <td className="border-r border-slate-100 px-4 py-3 text-xs text-slate-500 font-mono truncate">
                         {contact.contact_code || "-"}
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-[#0066cc] hover:underline cursor-pointer truncate">
+                      <td
+                        className="border-r border-slate-100 px-4 py-3 text-[#0066cc] hover:underline cursor-pointer truncate"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (contact.account?.account_id) {
+                            navigate(
+                              `/accounts?account_id=${contact.account.account_id}`,
+                            );
+                          }
+                        }}
+                      >
                         {contact.account?.account_name || "-"}
                       </td>
                       <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
