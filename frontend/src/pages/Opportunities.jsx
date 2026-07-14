@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Download,
   Upload,
@@ -60,6 +61,7 @@ const Opportunities = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const navigate = useNavigate();
 
   // Modal states - ready for when we build the components!
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -223,16 +225,41 @@ const Opportunities = () => {
             </div>
 
             {/* Stages Dropdown */}
-            <select 
+            <select
               value={stageFilter}
               onChange={(e) => setStageFilter(e.target.value)}
               className={`w-50 border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 cursor-pointer font-medium transition-colors ${getStageColorClass(stageFilter)}`}
             >
-              <option value="All Stages" className="bg-white text-slate-700 font-normal">All Stages</option>
-              <option value="Pitch Done" className="bg-white text-slate-700 font-normal">Pitch Done</option>
-              <option value="Follow Up" className="bg-white text-slate-700 font-normal">Follow Up</option>
-              <option value="Closed Won" className="bg-white text-slate-700 font-normal">Closed Won</option>
-              <option value="Closed Lost" className="bg-white text-slate-700 font-normal">Closed Lost</option>
+              <option
+                value="All Stages"
+                className="bg-white text-slate-700 font-normal"
+              >
+                All Stages
+              </option>
+              <option
+                value="Pitch Done"
+                className="bg-white text-slate-700 font-normal"
+              >
+                Pitch Done
+              </option>
+              <option
+                value="Follow Up"
+                className="bg-white text-slate-700 font-normal"
+              >
+                Follow Up
+              </option>
+              <option
+                value="Closed Won"
+                className="bg-white text-slate-700 font-normal"
+              >
+                Closed Won
+              </option>
+              <option
+                value="Closed Lost"
+                className="bg-white text-slate-700 font-normal"
+              >
+                Closed Lost
+              </option>
             </select>
 
             {/* Filter by Account */}
@@ -359,7 +386,17 @@ const Opportunities = () => {
                       <td className="border-r border-slate-100 px-4 py-3 font-semibold text-[#0066cc] hover:underline cursor-pointer truncate">
                         {opp.opportunity_name}
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-3 font-semibold text-[#0066cc] hover:underline cursor-pointer truncate">
+                      <td
+                        className="border-r border-slate-100 px-4 py-3 font-semibold text-[#0066cc] hover:underline cursor-pointer truncate"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (opp.opportunity_contact_fk) {
+                            navigate(
+                              `/contacts?contact_id=${opp.opportunity_contact_fk}`,
+                            );
+                          }
+                        }}
+                      >
                         {opp.opportunity_contact
                           ? `${opp.opportunity_contact.contact_firstname || ""} ${opp.opportunity_contact.contact_lastname || ""}`.trim()
                           : "-"}
@@ -372,7 +409,9 @@ const Opportunities = () => {
                       </td>
                       <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
                         {opp.opportunity_stage ? (
-                          <span className={`px-2.5 py-1 text-[11px] font-bold rounded border uppercase tracking-wide ${getStageBadgeClass(opp.opportunity_stage)}`}>
+                          <span
+                            className={`px-2.5 py-1 text-[11px] font-bold rounded border uppercase tracking-wide ${getStageBadgeClass(opp.opportunity_stage)}`}
+                          >
                             {opp.opportunity_stage.replace(/_/g, " ")}
                           </span>
                         ) : (
