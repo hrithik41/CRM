@@ -53,6 +53,7 @@ const ResizableHeader = ({ children, initialWidth }) => {
 const Opportunities = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [stageFilter, setStageFilter] = useState("All Stages");
   const [selectAll, setSelectAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [opportunitiesData, setOpportunitiesData] = useState([]);
@@ -112,6 +113,38 @@ const Opportunities = () => {
       if (newSelected.length === opportunitiesData.length) {
         setSelectAll(true);
       }
+    }
+  };
+
+  const getStageColorClass = (stage) => {
+    switch (stage) {
+      case "Closed Won":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-emerald-500";
+      case "Closed Lost":
+        return "bg-red-50 text-red-700 border-red-200 focus:ring-red-500";
+      case "Pitch Done":
+        return "bg-blue-50 text-blue-700 border-blue-200 focus:ring-blue-500";
+      case "Follow Up":
+        return "bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500";
+      default:
+        return "bg-white text-slate-700 border-slate-300 focus:ring-blue-500";
+    }
+  };
+
+  const getStageBadgeClass = (stage) => {
+    if (!stage) return "bg-orange-50 text-orange-600 border-orange-200";
+    const normalized = stage.replace(/_/g, " ").toUpperCase();
+    switch (normalized) {
+      case "CLOSED WON":
+        return "bg-emerald-50 text-emerald-600 border-emerald-200";
+      case "CLOSED LOST":
+        return "bg-red-50 text-red-600 border-red-200";
+      case "PITCH DONE":
+        return "bg-blue-50 text-blue-600 border-blue-200";
+      case "FOLLOW UP":
+        return "bg-amber-50 text-amber-600 border-amber-200";
+      default:
+        return "bg-slate-50 text-slate-600 border-slate-200";
     }
   };
 
@@ -190,12 +223,16 @@ const Opportunities = () => {
             </div>
 
             {/* Stages Dropdown */}
-            <select className="w-50 border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer">
-              <option>All Stages</option>
-              <option>Pitch Done</option>
-              <option>Follow Up</option>
-              <option>Closed Won</option>
-              <option>Closed Lost</option>
+            <select 
+              value={stageFilter}
+              onChange={(e) => setStageFilter(e.target.value)}
+              className={`w-50 border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 cursor-pointer font-medium transition-colors ${getStageColorClass(stageFilter)}`}
+            >
+              <option value="All Stages" className="bg-white text-slate-700 font-normal">All Stages</option>
+              <option value="Pitch Done" className="bg-white text-slate-700 font-normal">Pitch Done</option>
+              <option value="Follow Up" className="bg-white text-slate-700 font-normal">Follow Up</option>
+              <option value="Closed Won" className="bg-white text-slate-700 font-normal">Closed Won</option>
+              <option value="Closed Lost" className="bg-white text-slate-700 font-normal">Closed Lost</option>
             </select>
 
             {/* Filter by Account */}
@@ -335,7 +372,7 @@ const Opportunities = () => {
                       </td>
                       <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
                         {opp.opportunity_stage ? (
-                          <span className="px-2.5 py-1 text-[11px] font-bold rounded bg-orange-50 text-orange-600 border border-orange-200 uppercase tracking-wide">
+                          <span className={`px-2.5 py-1 text-[11px] font-bold rounded border uppercase tracking-wide ${getStageBadgeClass(opp.opportunity_stage)}`}>
                             {opp.opportunity_stage.replace(/_/g, " ")}
                           </span>
                         ) : (

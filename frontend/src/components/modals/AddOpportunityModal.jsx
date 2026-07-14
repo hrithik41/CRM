@@ -348,7 +348,7 @@ const AddOpportunityModal = ({
                       "PITCH_DONE",
                       "FOLLOW_UP",
                       "CONTRACT_OUT",
-                      "CLOSSED_WON",
+                      "CLOSED_WON",
                       "CLOSED_LOST"
                     ].map((stage) => stage.replace(/_/g, " "))}
                     value={formData.opportunity_stage?.replace(/_/g, " ")}
@@ -357,7 +357,7 @@ const AddOpportunityModal = ({
                         "PITCH_DONE",
                         "FOLLOW_UP",
                         "CONTRACT_OUT",
-                        "CLOSSED_WON",
+                        "CLOSED_WON",
                         "CLOSED_LOST"
                       ];
                       const originalValue =
