@@ -276,9 +276,9 @@ const Contacts = () => {
                         className="border-r border-slate-100 px-4 py-3 text-[#0066cc] hover:underline cursor-pointer truncate"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (contact.account?.account_id) {
+                          if (contact.contact_account_fk) {
                             navigate(
-                              `/accounts?account_id=${contact.account.account_id}`,
+                              `/accounts?account_id=${contact.contact_account_fk}`,
                             );
                           }
                         }}
@@ -365,11 +365,11 @@ const Contacts = () => {
           </div>
         </div>
       </div>
-      
-      <ConDetailView 
-        isOpen={!!viewContactId} 
-        onClose={() => setViewContactId(null)} 
-        contactId={viewContactId} 
+
+      <ConDetailView
+        isOpen={!!viewContactId}
+        onClose={() => setViewContactId(null)}
+        contactId={viewContactId}
       />
 
       <AddContactModal
