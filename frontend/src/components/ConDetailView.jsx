@@ -23,16 +23,54 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
   const [loading, setLoading] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState("Details");
   const [activeSidebarTab, setActiveSidebarTab] = useState("Call");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // New State for calls
+  const [callSubject, setCallSubject] = useState("");
+  const [callDescription, setCallDescription] = useState("");
+  const [savingCall, setSavingCall] = useState(false);
+  const [callsList, setCallsList] = useState([]);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      setCurrentUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDateTime = (date) => {
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).toLowerCase();
+    
+    const dateStr = date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+    
+    return `${timeStr} ${dateStr}`;
+  };
 
   useEffect(() => {
     if (isOpen && contactId) {
       setLoading(true);
-      api
-        .get(`/api/contacts/${contactId}`)
-        .then((res) => {
-          if (res.success) {
-            setContactData(res.data);
-          }
+      Promise.all([
+        api.get(`/api/contacts/${contactId}`),
+        api.get(`/api/calls?contact_id=${contactId}`)
+      ])
+        .then(([contactRes, callsRes]) => {
+          if (contactRes.success) setContactData(contactRes.data);
+          if (Array.isArray(callsRes)) setCallsList(callsRes);
         })
         .catch((error) =>
           console.error("Error fetching contact details:", error),
@@ -40,10 +78,46 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
         .finally(() => setLoading(false));
     } else {
       setContactData(null);
+      setCallsList([]);
       setActiveMainTab("Details");
       setActiveSidebarTab("Call");
+      setCallSubject("");
+      setCallDescription("");
     }
   }, [isOpen, contactId]);
+
+  const handleSaveCall = async () => {
+    if (!callSubject.trim() || !callDescription.trim()) return;
+    setSavingCall(true);
+    try {
+      const payload = {
+        call_user_fk: currentUser?.user_id || currentUser?.id,
+        call_contact_fk: contactId,
+        call_subject: callSubject,
+        call_description: callDescription,
+      };
+      
+      const newCall = await api.post('/api/calls', payload);
+      
+      if (newCall.error) {
+        throw new Error(newCall.error);
+      }
+      
+      const callToPush = {
+        ...newCall,
+        user: { user_id: currentUser?.user_id, user_name: currentUser?.user_name || currentUser?.name || "Unknown" }
+      };
+      
+      setCallsList(prev => [callToPush, ...prev]);
+      
+      setCallSubject("");
+      setCallDescription("");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingCall(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -474,6 +548,8 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                             </label>
                             <input
                               type="text"
+                              value={callSubject}
+                              onChange={(e) => setCallSubject(e.target.value)}
                               placeholder="Select an outcome or type your own..."
                               className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400"
                             />
@@ -487,6 +563,8 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                               Call Notes / Description
                             </label>
                             <textarea
+                              value={callDescription}
+                              onChange={(e) => setCallDescription(e.target.value)}
                               placeholder="What was discussed..."
                               rows={3}
                               className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 resize-none"
@@ -496,24 +574,62 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                           <div className="flex gap-2">
                             <div className="flex-1 border border-slate-200 rounded bg-slate-50 px-3 py-2 flex items-center gap-2 text-[11px] font-semibold text-slate-600">
                               <Clock size={12} className="text-slate-400" />
-                              05:28:00 pm 13 Jul 2026
+                              {formatDateTime(currentTime)}
                             </div>
                             <div className="flex-1 border border-slate-200 rounded bg-slate-50 px-3 py-2 flex items-center gap-2 text-[11px] font-semibold text-slate-600">
                               <User size={12} className="text-slate-400" />
-                              {contactData.contact_owner?.user_name ||
-                                "Unknown"}
+                              {currentUser?.name || "Unknown"}
                             </div>
                           </div>
 
                           <Button
                             variant="primary"
-                            className="w-full gap-2 font-bold justify-center bg-blue-600 py-2.5"
+                            onClick={handleSaveCall}
+                            disabled={savingCall || !callSubject.trim() || !callDescription.trim()}
+                            className="w-full gap-2 font-bold justify-center bg-blue-600 py-2.5 disabled:opacity-50"
                           >
-                            <Save size={14} /> Save Call
+                            <Save size={14} /> {savingCall ? "Saving..." : "Save Call"}
                           </Button>
                         </div>
                       </div>
                     )}
+                    
+                    {/* TIMELINE */}
+                    <div className="bg-slate-100 py-2.5 px-4 border-y border-slate-200 mt-4 flex items-center gap-2">
+                      <Clock size={12} className="text-slate-500" />
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Timeline</span>
+                    </div>
+                    <div className="p-4 space-y-6 max-h-[500px] overflow-y-auto">
+                      {callsList.map(call => (
+                        <div key={call.call_id} className="flex gap-3">
+                          <div className="w-8 h-8 rounded-full border border-emerald-500 text-emerald-600 flex items-center justify-center shrink-0 bg-white shadow-sm mt-0.5">
+                            <Phone size={14} />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-[13px] font-bold text-slate-800 leading-none mb-1.5">{call.call_subject}</h4>
+                            <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-400">
+                              <span className="flex items-center gap-1">
+                                <User size={12} /> {call.user?.user_name || "Unknown"}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock size={12} /> {call.call_created_at ? new Date(call.call_created_at).toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Just now"}
+                              </span>
+                            </div>
+                            {/* {call.call_description && (
+                              <p className="text-[12px] text-slate-600 mt-2 leading-relaxed">
+                                {call.call_description}
+                              </p>
+                            )} */}
+                          </div>
+                        </div>
+                      ))}
+                      {callsList.length === 0 && (
+                        <div className="text-center py-6 text-slate-400 text-xs font-medium">
+                          No timeline events yet.
+                        </div>
+                      )}
+                    </div>
+
                   </div>
 
 

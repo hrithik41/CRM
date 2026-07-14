@@ -22,6 +22,7 @@ model user {
   user_contacts       contact[]     @relation("contact_user")
   user_owned_contacts contact[]     @relation("contact_owner")
   user_campaigns      campaign[]    @relation("campaign_user")
+  user_calls          call[]        @relation("call_user")
   user_tasks          task[]        @relation("task_user")
   opportunities       opportunity[]
 
@@ -162,6 +163,7 @@ model contact {
   contact_account_billing_address  billing[]     @relation("billing_contact")
   contact_account_shipping_address shipping[]    @relation("shipping_contact")
   opportunities                    opportunity[]
+  contact_calls                    call[]        @relation("call_contact")
 
   @@index([contact_user_fk])
   @@index([contact_account_fk])
@@ -213,15 +215,6 @@ model opportunity {
   @@map("opportunities")
 }
 
-model task {
-  task_id      String  @id @default(uuid())
-  task_user_fk String?
-  user         user?   @relation("task_user", fields: [task_user_fk], references: [user_id])
-
-  @@index([task_user_fk])
-  @@map("tasks")
-}
-
 model project {
   project_id   String  @id @default(uuid())
 
@@ -244,6 +237,51 @@ model project {
   @@index([project_date])
   @@index([project_is_active])
   @@map("projects")
+}
+
+model call {
+  call_id      String  @id @default(uuid())
+
+  call_user_fk String?
+  user         user?   @relation("call_user", fields: [call_user_fk], references: [user_id])
+
+  call_contact_fk String?
+  contact contact? @relation("call_contact", fields: [call_contact_fk], references: [contact_id])
+  
+  call_subject     String?
+  call_description String?
+
+  call_created_at DateTime @default(now())
+  call_updated_at DateTime @updatedAt
+  call_deleted_at DateTime?
+
+  call_tasks    task[] @relation("call_task")
+
+  @@index([call_user_fk])
+  @@index([call_contact_fk])
+  @@map("calls")
+}
+
+model task {
+  task_id      String  @id @default(uuid())
+
+  task_user_fk String?
+  user         user?   @relation("task_user", fields: [task_user_fk], references: [user_id])
+
+  task_call_fk String?
+  call         call?   @relation("call_task", fields: [task_call_fk], references: [call_id])
+
+  task_subject     String?
+  task_description String?
+  task_priority    priority? @default(NORMAL)
+  task_due_date    DateTime? @default(now())
+
+  task_created_at DateTime @default(now())
+  task_updated_at DateTime @updatedAt
+  task_deleted_at DateTime?
+
+  @@index([task_user_fk])
+  @@map("tasks")
 }
 
 model campaign {
@@ -419,4 +457,10 @@ enum loss_reason {
   PRODUCT_FIT
   INTERNAL_PRIORITIES_CHANGED
   PRICING
+}
+
+enum priority {
+  NORMAL
+  HIGH
+  LOW
 }
