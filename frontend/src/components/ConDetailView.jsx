@@ -31,6 +31,15 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
   const [callDescription, setCallDescription] = useState("");
   const [savingCall, setSavingCall] = useState(false);
   const [callsList, setCallsList] = useState([]);
+  const [taskSubject, setTaskSubject] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [taskPriority, setTaskPriority] = useState("NORMAL"); // NORMAL, HIGH, LOW
+  const [taskDueDate, setTaskDueDate] = useState("");
+  const [taskDueTimeHH, setTaskDueTimeHH] = useState("12");
+  const [taskDueTimeMM, setTaskDueTimeMM] = useState("00");
+  const [taskDueTimeAMPM, setTaskDueTimeAMPM] = useState("PM");
+  const [savingTask, setSavingTask] = useState(false);
+  const [tasksList, setTasksList] = useState([]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -45,19 +54,21 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
   }, []);
 
   const formatDateTime = (date) => {
-    const timeStr = date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    }).toLowerCase();
-    
+    const timeStr = date
+      .toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      })
+      .toLowerCase();
+
     const dateStr = date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
-    
+
     return `${timeStr} ${dateStr}`;
   };
 
@@ -66,11 +77,13 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
       setLoading(true);
       Promise.all([
         api.get(`/api/contacts/${contactId}`),
-        api.get(`/api/calls?contact_id=${contactId}`)
+        api.get(`/api/calls?contact_id=${contactId}`),
+        api.get(`/api/tasks?contact_id=${contactId}`),
       ])
-        .then(([contactRes, callsRes]) => {
+        .then(([contactRes, callsRes, tasksRes]) => {
           if (contactRes.success) setContactData(contactRes.data);
           if (Array.isArray(callsRes)) setCallsList(callsRes);
+          if (Array.isArray(tasksRes)) setTasksList(tasksRes);
         })
         .catch((error) =>
           console.error("Error fetching contact details:", error),
@@ -79,10 +92,14 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
     } else {
       setContactData(null);
       setCallsList([]);
+      setTasksList([]);
       setActiveMainTab("Details");
       setActiveSidebarTab("Call");
       setCallSubject("");
       setCallDescription("");
+      setTaskSubject("");
+      setTaskDescription("");
+      setTaskPriority("NORMAL");
     }
   }, [isOpen, contactId]);
 
@@ -96,26 +113,83 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
         call_subject: callSubject,
         call_description: callDescription,
       };
-      
-      const newCall = await api.post('/api/calls', payload);
-      
+
+      const newCall = await api.post("/api/calls", payload);
+
       if (newCall.error) {
         throw new Error(newCall.error);
       }
-      
+
       const callToPush = {
         ...newCall,
-        user: { user_id: currentUser?.user_id, user_name: currentUser?.user_name || currentUser?.name || "Unknown" }
+        user: {
+          user_id: currentUser?.user_id,
+          user_name: currentUser?.user_name || currentUser?.name || "Unknown",
+        },
       };
-      
-      setCallsList(prev => [callToPush, ...prev]);
-      
+
+      setCallsList((prev) => [callToPush, ...prev]);
+
       setCallSubject("");
       setCallDescription("");
     } catch (err) {
       console.error(err);
     } finally {
       setSavingCall(false);
+    }
+  };
+
+  const handleSaveTask = async () => {
+    if (!taskSubject.trim()) return;
+
+    setSavingTask(true);
+    try {
+      let combinedDueDate = null;
+      if (taskDueDate) {
+        const dateObj = new Date(taskDueDate);
+        let hours = parseInt(taskDueTimeHH, 10);
+        const minutes = parseInt(taskDueTimeMM, 10);
+        if (taskDueTimeAMPM === "PM" && hours !== 12) hours += 12;
+        if (taskDueTimeAMPM === "AM" && hours === 12) hours = 0;
+        dateObj.setHours(hours, minutes);
+        combinedDueDate = dateObj.toISOString();
+      }
+
+      const payload = {
+        task_subject: taskSubject,
+        task_description: taskDescription,
+        task_priority: taskPriority,
+        task_contact_fk: contactId,
+        task_user_fk: currentUser?.id || currentUser?.user_id,
+        task_due_date: combinedDueDate,
+      };
+
+      const newTask = await api.post("/api/tasks", payload);
+
+      if (newTask.error) throw new Error(newTask.error);
+
+      const taskToPush = {
+        ...newTask,
+        user: {
+          user_id: currentUser?.id || currentUser?.user_id,
+          user_name: currentUser?.name || currentUser?.user_name || "Unknown",
+        },
+      };
+
+      setTasksList((prev) => [taskToPush, ...prev]);
+
+      // Reset form
+      setTaskSubject("");
+      setTaskDescription("");
+      setTaskPriority("NORMAL");
+      setTaskDueDate("");
+      setTaskDueTimeHH("12");
+      setTaskDueTimeMM("00");
+      setTaskDueTimeAMPM("PM");
+    } catch (err) {
+      console.error("Error saving task:", err);
+    } finally {
+      setSavingTask(false);
     }
   };
 
@@ -135,6 +209,24 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
     contactData?.contact_personal_email ||
     "-";
   const owner = contactData?.contact_owner?.user_name || "Unknown";
+  const combinedTimeline = [
+    ...callsList.map((call) => ({
+      ...call,
+      type: "call",
+      sortDate: new Date(call.call_created_at || Date.now()),
+    })),
+    ...tasksList.map((task) => ({
+      ...task,
+      type: "task",
+      sortDate: new Date(task.task_created_at || Date.now()),
+    })),
+  ].sort((a, b) => b.sortDate - a.sortDate);
+
+  const displayedTimeline = activeSidebarTab === "Call"
+    ? combinedTimeline.filter(item => item.type === "call")
+    : activeSidebarTab === "Task"
+    ? combinedTimeline.filter(item => item.type === "task")
+    : combinedTimeline;
 
   return (
     <div className="absolute inset-0 z-40 flex flex-col bg-slate-50 font-sans">
@@ -147,7 +239,6 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
           <div className="w-full mx-auto flex flex-col h-full min-h-0">
             {/* Top Section */}
             <div className="bg-white shadow-sm border-b border-slate-200 shrink-0">
-              
               {/* DIV 1: Breadcrumb & Actions */}
               <div className="flex justify-between items-start px-6 pt-4 mb-2">
                 <div>
@@ -267,15 +358,12 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                   ),
                 )}
               </div>
-
             </div>
 
             {/* Main Content Layout */}
             {activeMainTab === "Details" && (
               <div className="flex flex-col lg:flex-row gap-4 p-4 lg:p-6 flex-1 min-h-0">
-
                 <div className="flex-1 bg-white border border-slate-200 shadow-sm overflow-y-auto overscroll-y-contain pb-4">
-
                   <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50/50">
                     <h3 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                       Contact Information
@@ -423,20 +511,44 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                   </div>
                   <div className="flex flex-col">
                     <GridRow
-                      left={{ label: "Salutation", value: contactData.contact_salutation || "—" }}
-                      right={{ label: "TPID", value: contactData.contact_tpid || "—" }}
+                      left={{
+                        label: "Salutation",
+                        value: contactData.contact_salutation || "—",
+                      }}
+                      right={{
+                        label: "TPID",
+                        value: contactData.contact_tpid || "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Middle Name", value: contactData.contact_middlename || "—" }}
-                      right={{ label: "Fax Number", value: contactData.contact_fax_number || "—" }}
+                      left={{
+                        label: "Middle Name",
+                        value: contactData.contact_middlename || "—",
+                      }}
+                      right={{
+                        label: "Fax Number",
+                        value: contactData.contact_fax_number || "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Suffix", value: contactData.contact_suffix || "—" }}
-                      right={{ label: "Landline Number", value: contactData.contact_landline_number || "—" }}
+                      left={{
+                        label: "Suffix",
+                        value: contactData.contact_suffix || "—",
+                      }}
+                      right={{
+                        label: "Landline Number",
+                        value: contactData.contact_landline_number || "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Role", value: contactData.contact_role || "—" }}
-                      right={{ label: "Contact Status", value: contactData.contact_status || "—" }}
+                      left={{
+                        label: "Role",
+                        value: contactData.contact_role || "—",
+                      }}
+                      right={{
+                        label: "Contact Status",
+                        value: contactData.contact_status || "—",
+                      }}
                     />
                   </div>
 
@@ -471,11 +583,20 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                   </div>
                   <div className="flex flex-col">
                     <GridRow
-                      left={{ label: "City", value: contactData.contact_city || "—" }}
-                      right={{ label: "State", value: contactData.contact_state || "—" }}
+                      left={{
+                        label: "City",
+                        value: contactData.contact_city || "—",
+                      }}
+                      right={{
+                        label: "State",
+                        value: contactData.contact_state || "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Country", value: contactData.contact_country || "—" }}
+                      left={{
+                        label: "Country",
+                        value: contactData.contact_country || "—",
+                      }}
                       right={{ label: "Location", value: "—" }}
                     />
                   </div>
@@ -489,19 +610,44 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                   </div>
                   <div className="flex flex-col">
                     <GridRow
-                      left={{ label: "Pickup Date", value: contactData.contact_pickup_date ? new Date(contactData.contact_pickup_date).toLocaleDateString() : "—" }}
-                      right={{ label: "Drop Date", value: contactData.contact_drop_date ? new Date(contactData.contact_drop_date).toLocaleDateString() : "—" }}
+                      left={{
+                        label: "Pickup Date",
+                        value: contactData.contact_pickup_date
+                          ? new Date(
+                              contactData.contact_pickup_date,
+                            ).toLocaleDateString()
+                          : "—",
+                      }}
+                      right={{
+                        label: "Drop Date",
+                        value: contactData.contact_drop_date
+                          ? new Date(
+                              contactData.contact_drop_date,
+                            ).toLocaleDateString()
+                          : "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Pickup Time", value: contactData.contact_pickup_time || "—" }}
-                      right={{ label: "Drop Time", value: contactData.contact_drop_time || "—" }}
+                      left={{
+                        label: "Pickup Time",
+                        value: contactData.contact_pickup_time || "—",
+                      }}
+                      right={{
+                        label: "Drop Time",
+                        value: contactData.contact_drop_time || "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Pickup Location", value: contactData.contact_pickup_location || "—" }}
-                      right={{ label: "Drop Location", value: contactData.contact_drop_location || "—" }}
+                      left={{
+                        label: "Pickup Location",
+                        value: contactData.contact_pickup_location || "—",
+                      }}
+                      right={{
+                        label: "Drop Location",
+                        value: contactData.contact_drop_location || "—",
+                      }}
                     />
                   </div>
-
                 </div>
 
                 {/* Right Column - Sidebar */}
@@ -564,7 +710,9 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                             </label>
                             <textarea
                               value={callDescription}
-                              onChange={(e) => setCallDescription(e.target.value)}
+                              onChange={(e) =>
+                                setCallDescription(e.target.value)
+                              }
                               placeholder="What was discussed..."
                               rows={3}
                               className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 resize-none"
@@ -585,54 +733,244 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                           <Button
                             variant="primary"
                             onClick={handleSaveCall}
-                            disabled={savingCall || !callSubject.trim() || !callDescription.trim()}
+                            disabled={
+                              savingCall ||
+                              !callSubject.trim() ||
+                              !callDescription.trim()
+                            }
                             className="w-full gap-2 font-bold justify-center bg-blue-600 py-2.5 disabled:opacity-50"
                           >
-                            <Save size={14} /> {savingCall ? "Saving..." : "Save Call"}
+                            <Save size={14} />{" "}
+                            {savingCall ? "Saving..." : "Save Call"}
                           </Button>
                         </div>
                       </div>
                     )}
-                    
-                    {/* TIMELINE */}
-                    <div className="bg-slate-100 py-2.5 px-4 border-y border-slate-200 mt-4 flex items-center gap-2">
-                      <Clock size={12} className="text-slate-500" />
-                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Timeline</span>
-                    </div>
-                    <div className="p-4 space-y-6 max-h-[500px] overflow-y-auto">
-                      {callsList.map(call => (
-                        <div key={call.call_id} className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full border border-emerald-500 text-emerald-600 flex items-center justify-center shrink-0 bg-white shadow-sm mt-0.5">
-                            <Phone size={14} />
+
+                    {/* Create Task Form */}
+                    {activeSidebarTab === "Task" && (
+                      <div className="p-4">
+                        <h4 className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4">
+                          <CheckCircle size={14} /> Create a Task
+                        </h4>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Subject <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={taskSubject}
+                              onChange={(e) => setTaskSubject(e.target.value)}
+                              placeholder="Email follow up, schedule meeting..."
+                              className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400"
+                            />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="text-[13px] font-bold text-slate-800 leading-none mb-1.5">{call.call_subject}</h4>
-                            <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-400">
-                              <span className="flex items-center gap-1">
-                                <User size={12} /> {call.user?.user_name || "Unknown"}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock size={12} /> {call.call_created_at ? new Date(call.call_created_at).toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Just now"}
-                              </span>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Priority
+                            </label>
+                            <select
+                              value={taskPriority}
+                              onChange={(e) => setTaskPriority(e.target.value)}
+                              className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:border-blue-400"
+                            >
+                              <option value="LOW">Low</option>
+                              <option value="NORMAL">Normal</option>
+                              <option value="HIGH">High</option>
+                            </select>
+                          </div>
+
+                          <div className="flex gap-4">
+                            <div className="flex-1">
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                Due Date
+                              </label>
+                              <input
+                                type="date"
+                                value={taskDueDate}
+                                onChange={(e) => setTaskDueDate(e.target.value)}
+                                className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:border-blue-400"
+                              />
                             </div>
-                            {/* {call.call_description && (
-                              <p className="text-[12px] text-slate-600 mt-2 leading-relaxed">
-                                {call.call_description}
-                              </p>
-                            )} */}
+                            <div className="flex-1">
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                Due Time
+                              </label>
+                              <div className="flex items-center justify-center gap-1 w-full border border-slate-200 rounded px-2 py-2 text-[13px] text-slate-800 focus-within:border-blue-400 bg-white">
+                                <select 
+                                  value={taskDueTimeHH} 
+                                  onChange={(e) => setTaskDueTimeHH(e.target.value)}
+                                  className="appearance-none bg-transparent border-none p-0 shadow-none focus:ring-0 focus:outline-none text-center cursor-pointer outline-none w-7"
+                                >
+                                  {Array.from({length: 12}, (_, i) => i + 1).map(h => {
+                                    const val = h < 10 ? `0${h}` : `${h}`;
+                                    return <option key={val} value={val}>{val}</option>;
+                                  })}
+                                </select>
+                                <span className="text-slate-400 font-bold">:</span>
+                                <select 
+                                  value={taskDueTimeMM} 
+                                  onChange={(e) => setTaskDueTimeMM(e.target.value)}
+                                  className="appearance-none bg-transparent border-none p-0 shadow-none focus:ring-0 focus:outline-none text-center cursor-pointer outline-none w-7"
+                                >
+                                  {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                                    <option key={m} value={m}>{m}</option>
+                                  ))}
+                                </select>
+                                <select 
+                                  value={taskDueTimeAMPM} 
+                                  onChange={(e) => setTaskDueTimeAMPM(e.target.value)}
+                                  className="appearance-none bg-transparent border-none p-0 shadow-none focus:ring-0 focus:outline-none text-center cursor-pointer text-blue-600 font-bold ml-1 outline-none w-8"
+                                >
+                                  <option value="AM">AM</option>
+                                  <option value="PM">PM</option>
+                                </select>
+                              </div>
+                            </div>
                           </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Task Description
+                            </label>
+                            <textarea
+                              value={taskDescription}
+                              onChange={(e) =>
+                                setTaskDescription(e.target.value)
+                              }
+                              placeholder="Any additional details..."
+                              rows={3}
+                              className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 resize-none"
+                            />
+                          </div>
+
+                          <div className="flex gap-2">
+                            <div className="flex-1 border border-slate-200 rounded bg-slate-50 px-3 py-2 flex items-center gap-2 text-[11px] font-semibold text-slate-600">
+                              <User size={12} className="text-slate-400" />
+                              {currentUser?.name ||
+                                currentUser?.user_name ||
+                                "Unknown"}
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="primary"
+                            onClick={handleSaveTask}
+                            disabled={savingTask || !taskSubject.trim()}
+                            className="w-full gap-2 font-bold justify-center bg-blue-600 py-2.5 disabled:opacity-50"
+                          >
+                            <Save size={14} />{" "}
+                            {savingTask ? "Saving..." : "Save Task"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TIMELINE */}
+                    <div className="bg-slate-100 py-2.5 px-4 border-y border-slate-200 mt-4 flex items-center gap-2 shrink-0">
+                      <Clock size={12} className="text-slate-500" />
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        {activeSidebarTab} Timeline
+                      </span>
+                    </div>
+                    <div className="p-4 space-y-6 max-h-[400px] overflow-y-auto custom-scrollbar">
+                      {displayedTimeline.map((item) => (
+                        <div key={`${item.type}-${item.type === 'call' ? item.call_id : item.task_id}`} className="flex gap-3">
+                          
+                          {/* Render CALL */}
+                          {item.type === "call" ? (
+                            <>
+                              <div className="w-8 h-8 rounded-full border border-emerald-500 text-emerald-600 flex items-center justify-center shrink-0 bg-white shadow-sm mt-0.5">
+                                <Phone size={14} />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-[13px] font-bold text-slate-800 leading-none mb-1.5">
+                                  {item.call_subject}
+                                </h4>
+                                <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-400">
+                                  <span className="flex items-center gap-1">
+                                    <User size={12} />{" "}
+                                    {item.user?.user_name || "Unknown"}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock size={12} />{" "}
+                                    {item.call_created_at
+                                      ? new Date(item.call_created_at).toLocaleString("en-US", {
+                                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                                        })
+                                      : "Just now"}
+                                  </span>
+                                </div>
+                                {/* {item.call_description && (
+                                  <div className="mt-2 text-[12px] text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200">
+                                    {item.call_description}
+                                  </div>
+                                )} */}
+                              </div>
+                            </>
+                          ) : (
+                            /* Render TASK */
+                            <>
+                              <div className="w-8 h-8 rounded-full border border-blue-500 text-blue-600 flex items-center justify-center shrink-0 bg-white shadow-sm mt-0.5">
+                                <CheckCircle size={14} />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-[13px] font-bold text-slate-800 leading-none mb-1.5 flex items-center gap-2">
+                                  {item.task_subject}
+                                  {item.task_priority === "HIGH" && <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">High</span>}
+                                  {item.task_priority === "LOW" && <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">Low</span>}
+                                </h4>
+                                <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-400">
+                                  <span className="flex items-center gap-1">
+                                    <User size={12} />{" "}
+                                    {item.user?.user_name || "Unknown"}
+                                  </span>
+                                  <span >
+                                    {item.task_due_date && (
+                                    <span className="flex items-center gap-1">
+                                      <Clock size={12} />{" "}
+                                      {new Date(item.task_due_date).toLocaleString("en-US", {
+                                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                                        })}
+                                    </span>
+                                  )}
+                                    {/* {item.task_created_at
+                                      ? new Date(item.task_created_at).toLocaleString("en-US", {
+                                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                                        })
+                                      : "Just now"} */}
+                                  </span>
+                                  {/* {item.task_due_date && (
+                                    <span className="flex items-center gap-1 text-red-500 font-bold ml-2">
+                                      <Clock size={12} />{" "}
+                                      Due: {new Date(item.task_due_date).toLocaleString("en-US", {
+                                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                                        })}
+                                    </span>
+                                  )} */}
+                                </div>
+                                {/* {item.task_description && (
+                                  <div className="mt-2 text-[12px] text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200">
+                                    {item.task_description}
+                                  </div>
+                                )} */}
+                              </div>
+                            </>
+                          )}
+
                         </div>
                       ))}
-                      {callsList.length === 0 && (
+                      {displayedTimeline.length === 0 && (
                         <div className="text-center py-6 text-slate-400 text-xs font-medium">
-                          No timeline events yet.
+                          No {activeSidebarTab.toLowerCase()} timeline events yet.
                         </div>
                       )}
                     </div>
-
+                    
                   </div>
-
-
                 </div>
               </div>
             )}
